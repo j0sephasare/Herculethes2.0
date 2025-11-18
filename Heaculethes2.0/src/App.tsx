@@ -7,6 +7,8 @@ import ChallengesPage from "./pages/ChallengesPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import { useAuth } from "./auth/AuthContext";
+import WeightWorkoutPage from "./pages/WeightWorkoutPage";
+
 
 const tabs = [
   { to: "/home", label: "Home" },
@@ -43,6 +45,7 @@ export default function App() {
           <Route path="/meal-planner" element={<MealPlannerPage />} />
           <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/weight-workout" element={<WeightWorkoutPage />} />
         </Routes>
       </main>
 
