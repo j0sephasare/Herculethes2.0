@@ -22,3 +22,10 @@ export type WorkoutSummary = {
   totalDoneSets: number;
   sets: WorkoutSet[];
 };
+
+export type WorkoutDoc = WorkoutSummary & {
+  id: string;
+  title: string;
+  description?: string;
+  createdAt?: Date | null;
+};

@@ -9,7 +9,7 @@ import LoginPage from "./pages/LoginPage";
 import { useAuth } from "./auth/AuthContext";
 import WeightWorkoutPage from "./pages/WeightWorkoutPage";
 import SaveWorkoutPage from "./pages/SaveWorkoutPage";
-
+import WorkoutDetailPage from "./pages/WorkoutDetailPage";
 const tabs = [
   { to: "/home", label: "Home" },
   { to: "/exercises", label: "Exercises" },
@@ -47,6 +47,7 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/weight-workout" element={<WeightWorkoutPage />} />
           <Route path="/save-workout" element={<SaveWorkoutPage />} />
+          <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
         </Routes>
       </main>
 
