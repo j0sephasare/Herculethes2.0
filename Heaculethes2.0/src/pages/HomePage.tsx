@@ -1,3 +1,4 @@
+// src/pages/HomePage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -5,6 +6,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  doc,
 } from "firebase/firestore";
 
 import { useAuth } from "../auth/AuthContext";
@@ -50,10 +52,7 @@ function formatDateLabel(date: Date) {
 }
 
 function groupSetsByExercise(sets: WorkoutSet[]) {
-  const map = new Map<
-    string,
-    { name: string; count: number }
-  >();
+  const map = new Map<string, { name: string; count: number }>();
 
   for (const s of sets) {
     const key = s.exerciseId || s.exerciseName;
@@ -71,8 +70,11 @@ function groupSetsByExercise(sets: WorkoutSet[]) {
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [workouts, setWorkouts] = useState<WorkoutDoc[] | null>(null);
 
+  const [workouts, setWorkouts] = useState<WorkoutDoc[] | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
+
+  // Load workouts
   useEffect(() => {
     if (!user) {
       setWorkouts(null);
@@ -109,24 +111,56 @@ export default function HomePage() {
     return () => unsub();
   }, [user]);
 
+  // Load profile displayName for greeting
+  useEffect(() => {
+    if (!user) {
+      setProfileName(null);
+      return;
+    }
+
+    const profileRef = doc(db, "profiles", user.uid);
+    const unsub = onSnapshot(profileRef, (snap) => {
+      const data = snap.data() as { displayName?: string } | undefined;
+      if (data?.displayName && data.displayName.trim()) {
+        setProfileName(data.displayName.trim());
+      } else {
+        setProfileName(null);
+      }
+    });
+
+    return () => unsub();
+  }, [user]);
+
   const hasWorkouts = useMemo(
     () => !!workouts && workouts.length > 0,
     [workouts]
   );
 
+  // Greeting name (no email shown)
+  const email = user?.email ?? "";
+  const fallbackName =
+    email && email.includes("@") ? email.split("@")[0] : "Athlete";
+  const greetingName = profileName || fallbackName;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
       <header className="px-4 pt-4 pb-3 border-b border-slate-800">
         <h1 className="text-2xl font-bold">Home</h1>
-        <p className="text-sm text-slate-400">
-          Welcome back{user?.email ? `, ${user.email}` : ""}.
-        </p>
+        {user ? (
+          <p className="text-sm text-slate-400">
+            Welcome back, {greetingName}.
+          </p>
+        ) : (
+          <p className="text-sm text-slate-400">
+            Log in to start tracking your workouts.
+          </p>
+        )}
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         {!user && (
           <p className="text-sm text-slate-400">
-            Log in to start tracking your workouts.
+            You need to be logged in to see your recent workouts.
           </p>
         )}
 
@@ -155,8 +189,7 @@ export default function HomePage() {
             </h2>
 
             {workouts!.map((w) => {
-              const createdDate =
-                w.createdAt ?? new Date(w.startedAt);
+              const createdDate = w.createdAt ?? new Date(w.startedAt);
               const label = formatDateLabel(createdDate);
 
               const grouped = groupSetsByExercise(w.sets);
@@ -174,9 +207,7 @@ export default function HomePage() {
                       <p className="text-sm font-semibold">
                         {w.title || "Workout"}
                       </p>
-                      <p className="text-xs text-slate-400">
-                        {label}
-                      </p>
+                      <p className="text-xs text-slate-400">{label}</p>
                     </div>
                   </div>
 
@@ -219,8 +250,7 @@ export default function HomePage() {
                           </div>
                           <p className="text-slate-200">
                             <span className="font-semibold">
-                              {ex.count} set
-                              {ex.count > 1 ? "s" : ""}
+                              {ex.count} set{ex.count > 1 ? "s" : ""}
                             </span>{" "}
                             {ex.name}
                           </p>

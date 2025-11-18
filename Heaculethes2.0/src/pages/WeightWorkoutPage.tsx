@@ -168,7 +168,7 @@ export default function WeightWorkoutPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Top bar like Heavy: duration, volume, sets + Finish */}
+      {/* Top bar: duration, volume, sets + Finish */}
       <header className="px-4 pt-3 pb-2 border-b border-slate-800 bg-slate-950">
         <div className="flex items-center justify-between mb-2">
           <button
