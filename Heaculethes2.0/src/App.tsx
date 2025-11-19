@@ -11,6 +11,7 @@ import WeightWorkoutPage from "./pages/WeightWorkoutPage";
 import SaveWorkoutPage from "./pages/SaveWorkoutPage";
 import WorkoutDetailPage from "./pages/WorkoutDetailPage";
 import MacroCalculatorPage from "./pages/MacroCalculatorPage";
+import GymsNearMePage from "./pages/GymsNearMePage";
 
 const tabs = [
   { to: "/home", label: "Home" },
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/save-workout" element={<SaveWorkoutPage />} />
           <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
           <Route path="/macros" element={<MacroCalculatorPage />} />
+          <Route path="/gyms" element={<GymsNearMePage />} />
 
         </Routes>
       </main>

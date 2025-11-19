@@ -447,6 +447,7 @@ export default function ProfilePage() {
 
         {/* Account actions */}
        {/* Account actions */}
+{/* Account actions */}
 <section className="space-y-2">
   <button
     onClick={() => navigate("/macros")}
@@ -456,12 +457,20 @@ export default function ProfilePage() {
   </button>
 
   <button
+    onClick={() => navigate("/gyms")}
+    className="w-full rounded-xl border border-emerald-600/70 text-emerald-400 text-sm py-2 font-semibold hover:bg-emerald-900/20"
+  >
+    Find gyms near me
+  </button>
+
+  <button
     onClick={logout}
     className="w-full rounded-xl border border-red-600/70 text-red-400 text-sm py-2 font-semibold hover:bg-red-900/20"
   >
     Log out
   </button>
 </section>
+
 
       </main>
     </div>
