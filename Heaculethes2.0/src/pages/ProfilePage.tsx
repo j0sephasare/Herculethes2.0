@@ -14,6 +14,7 @@ import { updateProfile } from "firebase/auth";
 import { useAuth } from "../auth/AuthContext";
 import { auth, db, storage } from "../firebase";
 import type { WorkoutDoc, WorkoutSet } from "../types/workout";
+import { useNavigate } from "react-router-dom";
 
 type FirestoreWorkout = {
   title: string;
@@ -71,6 +72,7 @@ function computeDailyVolume(workouts: WorkoutDoc[]): DailyVolume[] {
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<WorkoutDoc[] | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
@@ -444,14 +446,23 @@ export default function ProfilePage() {
         </section>
 
         {/* Account actions */}
-        <section className="space-y-2">
-          <button
-            onClick={logout}
-            className="w-full rounded-xl border border-red-600/70 text-red-400 text-sm py-2 font-semibold hover:bg-red-900/20"
-          >
-            Log out
-          </button>
-        </section>
+       {/* Account actions */}
+<section className="space-y-2">
+  <button
+    onClick={() => navigate("/macros")}
+    className="w-full rounded-xl border border-blue-600/70 text-blue-400 text-sm py-2 font-semibold hover:bg-blue-900/20"
+  >
+    Open macro calculator
+  </button>
+
+  <button
+    onClick={logout}
+    className="w-full rounded-xl border border-red-600/70 text-red-400 text-sm py-2 font-semibold hover:bg-red-900/20"
+  >
+    Log out
+  </button>
+</section>
+
       </main>
     </div>
   );
