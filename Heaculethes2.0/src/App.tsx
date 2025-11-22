@@ -12,7 +12,7 @@ import SaveWorkoutPage from "./pages/SaveWorkoutPage";
 import WorkoutDetailPage from "./pages/WorkoutDetailPage";
 import MacroCalculatorPage from "./pages/MacroCalculatorPage";
 import GymsNearMePage from "./pages/GymsNearMePage";
-
+import GoForRunPage from "./pages/GoForRunPage";
 const tabs = [
   { to: "/home", label: "Home" },
   { to: "/exercises", label: "Exercises" },
@@ -53,7 +53,7 @@ export default function App() {
           <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
           <Route path="/macros" element={<MacroCalculatorPage />} />
           <Route path="/gyms" element={<GymsNearMePage />} />
-
+          <Route path="/go-run" element={<GoForRunPage />} />
         </Routes>
       </main>
 
