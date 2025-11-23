@@ -1,5 +1,5 @@
 // src/App.tsx
-import { NavLink, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ExercisesPage from "./pages/ExercisesPage";
 import MealPlannerPage from "./pages/MealPlannerPage";
@@ -13,13 +13,7 @@ import WorkoutDetailPage from "./pages/WorkoutDetailPage";
 import MacroCalculatorPage from "./pages/MacroCalculatorPage";
 import GymsNearMePage from "./pages/GymsNearMePage";
 import GoForRunPage from "./pages/GoForRunPage";
-const tabs = [
-  { to: "/home", label: "Home" },
-  { to: "/exercises", label: "Exercises" },
-  { to: "/meal-planner", label: "Meal Plans" },
-  { to: "/challenges", label: "Challenges" },
-  { to: "/profile", label: "Profile" },
-];
+import AppShell from "./layout/AppShell";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -32,48 +26,35 @@ export default function App() {
     );
   }
 
+  // Not logged in → only show login/register
   if (!user) {
-    // Not logged in → only show login/register
     return <LoginPage />;
   }
 
-  // Logged in → show the main app
+  // Logged in → keep nav persistent with a layout route
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50">
-      <main className="flex-1 overflow-y-auto">
-        <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/exercises" element={<ExercisesPage />} />
-          <Route path="/meal-planner" element={<MealPlannerPage />} />
-          <Route path="/challenges" element={<ChallengesPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/weight-workout" element={<WeightWorkoutPage />} />
-          <Route path="/save-workout" element={<SaveWorkoutPage />} />
-          <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
-          <Route path="/macros" element={<MacroCalculatorPage />} />
-          <Route path="/gyms" element={<GymsNearMePage />} />
-          <Route path="/go-run" element={<GoForRunPage />} />
-        </Routes>
-      </main>
+    <Routes>
+      <Route path="/" element={<AppShell />}>
+        <Route index element={<Navigate to="/home" replace />} />
+        <Route path="home" element={<HomePage />} />
+        <Route path="exercises" element={<ExercisesPage />} />
+        <Route path="meal-planner" element={<MealPlannerPage />} />
+        <Route path="challenges" element={<ChallengesPage />} />
+        <Route path="profile" element={<ProfilePage />} />
 
-      <nav className="border-t border-slate-800 bg-slate-900/80 backdrop-blur">
-        <div className="flex justify-around py-2">
-          {tabs.map((tab) => (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              className={({ isActive }: { isActive: boolean }) =>
-                `text-xs px-3 py-1 rounded-full transition ${
-                  isActive ? "text-blue-400 bg-slate-800" : "text-slate-400"
-                }`
-              }
-            >
-              {tab.label}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
-    </div>
+        {/* Workout flow */}
+        <Route path="weight-workout" element={<WeightWorkoutPage />} />
+        <Route path="save-workout" element={<SaveWorkoutPage />} />
+        <Route path="workouts/:id" element={<WorkoutDetailPage />} />
+
+        {/* Extras */}
+        <Route path="macros" element={<MacroCalculatorPage />} />
+        <Route path="gyms" element={<GymsNearMePage />} />
+        <Route path="go-run" element={<GoForRunPage />} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Route>
+    </Routes>
   );
 }

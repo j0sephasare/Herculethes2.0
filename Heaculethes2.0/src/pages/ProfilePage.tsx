@@ -15,6 +15,7 @@ import { useAuth } from "../auth/AuthContext";
 import { auth, db, storage } from "../firebase";
 import type { WorkoutDoc, WorkoutSet } from "../types/workout";
 import { useNavigate } from "react-router-dom";
+import ProgressDashboard from "../components/ProgressDashboard";
 
 type FirestoreWorkout = {
   title: string;
@@ -36,7 +37,6 @@ type ProfileData = {
 function formatDuration(sec: number) {
   const hours = Math.floor(sec / 3600);
   const minutes = Math.floor((sec % 3600) / 60);
-
   if (hours === 0) return `${minutes} min`;
   return `${hours} h ${minutes.toString().padStart(2, "0")} min`;
 }
@@ -44,7 +44,6 @@ function formatDuration(sec: number) {
 type DailyVolume = { label: string; volume: number };
 
 function computeDailyVolume(workouts: WorkoutDoc[]): DailyVolume[] {
-  // last 7 days including today
   const days: DailyVolume[] = [];
   const today = new Date();
 
@@ -52,9 +51,7 @@ function computeDailyVolume(workouts: WorkoutDoc[]): DailyVolume[] {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
-    const label = d.toLocaleDateString(undefined, {
-      weekday: "short",
-    });
+    const label = d.toLocaleDateString(undefined, { weekday: "short" });
 
     const volume = workouts
       .filter((w) => {
@@ -153,7 +150,6 @@ export default function ProfilePage() {
     (email && email.includes("@") ? email.split("@")[0] : "Athlete");
 
   useEffect(() => {
-    // Keep edit field in sync with current name when profile/user changes
     setEditName(fallbackName);
   }, [fallbackName]);
 
@@ -244,7 +240,6 @@ export default function ProfilePage() {
       setError("Failed to upload profile picture. Please try again.");
     } finally {
       setUploadingAvatar(false);
-      // reset file input so same file can be selected again if needed
       e.target.value = "";
     }
   };
@@ -304,9 +299,13 @@ export default function ProfilePage() {
                 {savingName ? "Saving…" : "Save"}
               </button>
             </div>
-            {/* Email still visible only here; remove if you want full privacy */}
             <p className="text-xs text-slate-400">{email}</p>
           </div>
+        </section>
+
+        {/* 🔥 Progress & Analytics Dashboard */}
+        <section>
+          <ProgressDashboard workouts={workouts ?? []} />
         </section>
 
         {/* Lifetime stats */}
@@ -359,42 +358,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Volume chart (last 7 days) */}
-        <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-200">
-            Volume (last 7 days)
-          </h2>
-          {!hasWorkouts && (
-            <p className="text-xs text-slate-400">
-              Your volume chart will appear here once you log workouts.
-            </p>
-          )}
-
-          {hasWorkouts && (
-            <div className="space-y-2">
-              {volumeSeries.map((d) => {
-                const pct = (d.volume / maxVolume) * 100;
-                return (
-                  <div key={d.label} className="flex items-center gap-2">
-                    <span className="w-10 text-[11px] text-slate-400">
-                      {d.label}
-                    </span>
-                    <div className="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-blue-500 transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="w-14 text-right text-[11px] text-slate-400">
-                      {d.volume ? `${d.volume} kg` : "-"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
+        
         {/* Recent workouts preview */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-200">
@@ -446,32 +410,28 @@ export default function ProfilePage() {
         </section>
 
         {/* Account actions */}
-       {/* Account actions */}
-{/* Account actions */}
-<section className="space-y-2">
-  <button
-    onClick={() => navigate("/macros")}
-    className="w-full rounded-xl border border-blue-600/70 text-blue-400 text-sm py-2 font-semibold hover:bg-blue-900/20"
-  >
-    Open macro calculator
-  </button>
+        <section className="space-y-2">
+          <button
+            onClick={() => navigate("/macros")}
+            className="w-full rounded-xl border border-blue-600/70 text-blue-400 text-sm py-2 font-semibold hover:bg-blue-900/20"
+          >
+            Open macro calculator
+          </button>
 
-  <button
-    onClick={() => navigate("/gyms")}
-    className="w-full rounded-xl border border-emerald-600/70 text-emerald-400 text-sm py-2 font-semibold hover:bg-emerald-900/20"
-  >
-    Find gyms near me
-  </button>
+          <button
+            onClick={() => navigate("/gyms")}
+            className="w-full rounded-xl border border-emerald-600/70 text-emerald-400 text-sm py-2 font-semibold hover:bg-emerald-900/20"
+          >
+            Find gyms near me
+          </button>
 
-  <button
-    onClick={logout}
-    className="w-full rounded-xl border border-red-600/70 text-red-400 text-sm py-2 font-semibold hover:bg-red-900/20"
-  >
-    Log out
-  </button>
-</section>
-
-
+          <button
+            onClick={logout}
+            className="w-full rounded-xl border border-red-600/70 text-red-400 text-sm py-2 font-semibold hover:bg-red-900/20"
+          >
+            Log out
+          </button>
+        </section>
       </main>
     </div>
   );
