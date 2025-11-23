@@ -1,8 +1,14 @@
+// src/pages/WeightWorkoutPage.tsx
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import type { WorkoutExercise, WorkoutSet, WorkoutSummary } from "../types/workout";
+import type {
+  WorkoutExercise,
+  WorkoutSet,
+  WorkoutSummary,
+} from "../types/workout";
+import useUnsavedChanges from "../hooks/useUnsavedChanges";
 
 const EXERCISES: WorkoutExercise[] = [
   { id: "squat", name: "Squat (Barbell)", muscleGroup: "Quadriceps" },
@@ -15,11 +21,14 @@ const EXERCISES: WorkoutExercise[] = [
   { id: "tricep-pushdown", name: "Tricep Pushdown", muscleGroup: "Triceps" },
 ];
 
+// LocalStorage key for in-progress workouts
+const DRAFT_KEY = "herculethes.weightworkout.draft";
+
 export default function WeightWorkoutPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [startedAt] = useState(() => Date.now());
+  const [startedAt, setStartedAt] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0); // seconds
   const [sets, setSets] = useState<WorkoutSet[]>([]);
   const [showPicker, setShowPicker] = useState(false);
@@ -27,6 +36,33 @@ export default function WeightWorkoutPage() {
   const [selectedExercise, setSelectedExercise] =
     useState<WorkoutExercise | null>(null);
 
+  // Restore any saved draft on first mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+
+      const draft = JSON.parse(raw) as {
+        startedAt: number;
+        sets: WorkoutSet[];
+        elapsedAtSave: number;
+        savedAt: number;
+      };
+
+      const restore = window.confirm("Resume in-progress workout?");
+      if (restore) {
+        setStartedAt(draft.startedAt || Date.now());
+        setSets(Array.isArray(draft.sets) ? draft.sets : []);
+        setElapsed(draft.elapsedAtSave || 0);
+      } else {
+        localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+  }, []);
+
+  // Stopwatch
   useEffect(() => {
     const id = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startedAt) / 1000));
@@ -113,9 +149,7 @@ export default function WeightWorkoutPage() {
   };
 
   const addAnotherSetForExercise = (exerciseId: string) => {
-    const lastSet = [...sets]
-      .reverse()
-      .find((s) => s.exerciseId === exerciseId);
+    const lastSet = [...sets].reverse().find((s) => s.exerciseId === exerciseId);
     if (!lastSet) return;
     const newSet: WorkoutSet = {
       ...lastSet,
@@ -125,7 +159,34 @@ export default function WeightWorkoutPage() {
     setSets((prev) => [...prev, newSet]);
   };
 
+  // Dirty state & unsaved-changes guard
+  const isDirty = sets.length > 0 || elapsed > 10;
+  useUnsavedChanges(isDirty);
+
+  // Autosave draft whenever core state changes
+  useEffect(() => {
+    if (!isDirty) return;
+    try {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          startedAt,
+          sets,
+          elapsedAtSave: elapsed,
+          savedAt: Date.now(),
+        })
+      );
+    } catch {
+      // ignore quota errors
+    }
+  }, [startedAt, sets, elapsed, isDirty]);
+
+  const clearDraft = () => localStorage.removeItem(DRAFT_KEY);
+
   const handleDiscard = () => {
+    const ok = window.confirm("Discard this workout?");
+    if (!ok) return;
+    clearDraft();
     navigate("/exercises");
   };
 
@@ -144,6 +205,7 @@ export default function WeightWorkoutPage() {
       sets,
     };
 
+    clearDraft(); // remove the draft when finishing
     navigate("/save-workout", { state: summary });
   };
 
@@ -172,7 +234,7 @@ export default function WeightWorkoutPage() {
       <header className="px-4 pt-3 pb-2 border-b border-slate-800 bg-slate-950">
         <div className="flex items-center justify-between mb-2">
           <button
-            onClick={() => navigate("/exercises")}
+            onClick={handleDiscard}
             className="text-xs text-slate-400 hover:text-slate-200"
           >
             ⟵ Log Workout
