@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-
+import { useMemo, useState } from "react";
 type MealType = "breakfast" | "lunch" | "dinner";
 
 type RecipeSummary = {

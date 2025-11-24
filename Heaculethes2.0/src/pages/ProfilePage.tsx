@@ -41,32 +41,6 @@ function formatDuration(sec: number) {
   return `${hours} h ${minutes.toString().padStart(2, "0")} min`;
 }
 
-type DailyVolume = { label: string; volume: number };
-
-function computeDailyVolume(workouts: WorkoutDoc[]): DailyVolume[] {
-  const days: DailyVolume[] = [];
-  const today = new Date();
-
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
-    const label = d.toLocaleDateString(undefined, { weekday: "short" });
-
-    const volume = workouts
-      .filter((w) => {
-        const wd = new Date(w.startedAt);
-        const wdKey = wd.toISOString().slice(0, 10);
-        return wdKey === key;
-      })
-      .reduce((sum, w) => sum + (w.totalVolumeKg || 0), 0);
-
-    days.push({ label, volume });
-  }
-
-  return days;
-}
-
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -185,14 +159,6 @@ export default function ProfilePage() {
       }
     );
   }, [workouts]);
-
-  const volumeSeries = useMemo(
-    () => (workouts ? computeDailyVolume(workouts) : []),
-    [workouts]
-  );
-
-  const maxVolume =
-    volumeSeries.reduce((m, d) => Math.max(m, d.volume), 0) || 1;
 
   // Handlers
   const handleNameSave = async () => {
@@ -358,7 +324,6 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        
         {/* Recent workouts preview */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-200">

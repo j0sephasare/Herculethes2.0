@@ -7,7 +7,6 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 // Small helpers
 type RunState = "idle" | "running" | "paused" | "finished";
-
 type LatLng = { lat: number; lon: number; timestamp: number };
 
 function toRad(deg: number) {
@@ -29,13 +28,10 @@ function distanceMeters(a: LatLng, b: LatLng): number {
     2 *
     Math.atan2(
       Math.sqrt(
-        sinLat * sinLat +
-          Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon
+        sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon
       ),
       Math.sqrt(
-        1 -
-          (sinLat * sinLat +
-            Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon)
+        1 - (sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon)
       )
     );
 
@@ -64,9 +60,7 @@ function formatPace(ms: number, distanceM: number): string {
 }
 
 export default function GoForRunPage() {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as
-    | string
-    | undefined;
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const [mapsError, setMapsError] = useState<string | null>(null);
@@ -74,7 +68,6 @@ export default function GoForRunPage() {
   const [runState, setRunState] = useState<RunState>("idle");
   const [targetDistanceKm, setTargetDistanceKm] = useState(5); // default 5k
 
-  const [positions, setPositions] = useState<LatLng[]>([]);
   const [totalDistanceM, setTotalDistanceM] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
 
@@ -86,6 +79,7 @@ export default function GoForRunPage() {
   const userMarkerRef = useRef<any | null>(null);
   const pathPolylineRef = useRef<any | null>(null);
 
+  const lastPointRef = useRef<LatLng | null>(null); // NEW: track only the last point
   const watchIdRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
   const runStartTimeRef = useRef<number | null>(null);
@@ -113,8 +107,7 @@ export default function GoForRunPage() {
     script.defer = true;
 
     script.onload = () => setMapsLoaded(true);
-    script.onerror = () =>
-      setMapsError("Failed to load Google Maps script.");
+    script.onerror = () => setMapsError("Failed to load Google Maps script.");
 
     document.body.appendChild(script);
   }, [apiKey]);
@@ -132,12 +125,9 @@ export default function GoForRunPage() {
       (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
-        const location: LatLng = {
-          lat,
-          lon,
-          timestamp: pos.timestamp,
-        };
+        const location: LatLng = { lat, lon, timestamp: pos.timestamp };
         setInitialLocation(location);
+        lastPointRef.current = location;
 
         const center = { lat, lng: lon };
 
@@ -176,7 +166,6 @@ export default function GoForRunPage() {
       return;
     }
 
-    // Start / restart timer
     if (timerRef.current == null && runStartTimeRef.current != null) {
       timerRef.current = window.setInterval(() => {
         const now = Date.now();
@@ -192,7 +181,7 @@ export default function GoForRunPage() {
     };
   }, [runState]);
 
-  // --- Start GPS tracking ---
+  // --- Start/Stop GPS watch ---
   const startWatch = () => {
     if (!("geolocation" in navigator)) {
       setLocationError("Geolocation is not supported in this browser.");
@@ -207,39 +196,36 @@ export default function GoForRunPage() {
           timestamp: pos.timestamp,
         };
 
-        setPositions((prev) => {
-          const next = [...prev, newPoint];
+        // distance increment from last point
+        const prev = lastPointRef.current;
+        if (prev) {
+          const inc = distanceMeters(prev, newPoint);
+          setTotalDistanceM((d) => d + inc);
+        }
+        lastPointRef.current = newPoint;
 
-          if (prev.length > 0) {
-            const inc = distanceMeters(prev[prev.length - 1], newPoint);
-            setTotalDistanceM((d) => d + inc);
+        // Update map / polyline
+        if (mapRef.current) {
+          const latLng = new google.maps.LatLng(newPoint.lat, newPoint.lon);
+          mapRef.current.panTo(latLng);
+
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setPosition(latLng);
           }
 
-          // Update map / polyline
-          if (mapRef.current) {
-            const latLng = new google.maps.LatLng(newPoint.lat, newPoint.lon);
-            mapRef.current.panTo(latLng);
-
-            if (userMarkerRef.current) {
-              userMarkerRef.current.setPosition(latLng);
-            }
-
-            if (!pathPolylineRef.current) {
-              pathPolylineRef.current = new google.maps.Polyline({
-                path: [latLng],
-                geodesic: true,
-                strokeColor: "#22c55e",
-                strokeOpacity: 1.0,
-                strokeWeight: 4,
-                map: mapRef.current,
-              });
-            } else {
-              pathPolylineRef.current.getPath().push(latLng);
-            }
+          if (!pathPolylineRef.current) {
+            pathPolylineRef.current = new google.maps.Polyline({
+              path: [latLng],
+              geodesic: true,
+              strokeColor: "#22c55e",
+              strokeOpacity: 1.0,
+              strokeWeight: 4,
+              map: mapRef.current,
+            });
+          } else {
+            pathPolylineRef.current.getPath().push(latLng);
           }
-
-          return next;
-        });
+        }
       },
       (err) => {
         console.error(err);
@@ -267,10 +253,10 @@ export default function GoForRunPage() {
     if (!initialLocation) return;
 
     // Reset metrics
-    setPositions([]);
     setTotalDistanceM(0);
     setElapsedMs(0);
     runStartTimeRef.current = Date.now();
+    lastPointRef.current = initialLocation;
 
     // Reset polyline
     if (pathPolylineRef.current) {
@@ -303,10 +289,10 @@ export default function GoForRunPage() {
   const handleReset = () => {
     stopWatch();
     setRunState("idle");
-    setPositions([]);
     setTotalDistanceM(0);
     setElapsedMs(0);
     runStartTimeRef.current = null;
+    lastPointRef.current = null;
 
     if (pathPolylineRef.current) {
       pathPolylineRef.current.setMap(null);
@@ -395,9 +381,7 @@ export default function GoForRunPage() {
               </div>
               <div>
                 <p className="text-slate-400">Time</p>
-                <p className="text-sm font-semibold">
-                  {formatTime(elapsedMs)}
-                </p>
+                <p className="text-sm font-semibold">{formatTime(elapsedMs)}</p>
               </div>
               <div>
                 <p className="text-slate-400">Pace (min/km)</p>

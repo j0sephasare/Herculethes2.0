@@ -1,5 +1,5 @@
 // src/components/ProgressDashboard.tsx
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 
 /** Accept both shapes used across the app */
 export type WorkoutSet = {
