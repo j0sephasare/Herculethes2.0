@@ -359,7 +359,6 @@ export default function GoForRunPage() {
   }, [totalDistanceM, targetMeters, runState]);
 
   /* ---------------------------- Derived values --------------------------- */
-  const remainingM = Math.max(targetMeters - totalDistanceM, 0);
   const progress = Math.min(totalDistanceM / Math.max(targetMeters, 1), 1);
 
   const gpsBadge = useMemo(() => {
