@@ -9,6 +9,7 @@ import type {
   WorkoutSummary,
 } from "../types/workout";
 import useUnsavedChanges from "../hooks/useUnsavedChanges";
+import { useWorkoutGuard } from "../guards/WorkoutGuard";
 
 const EXERCISES: WorkoutExercise[] = [
   { id: "squat", name: "Squat (Barbell)", muscleGroup: "Quadriceps" },
@@ -27,6 +28,7 @@ const DRAFT_KEY = "herculethes.weightworkout.draft";
 export default function WeightWorkoutPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { setDirty } = useWorkoutGuard();
 
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0); // seconds
@@ -163,6 +165,12 @@ export default function WeightWorkoutPage() {
   const isDirty = sets.length > 0 || elapsed > 10;
   useUnsavedChanges(isDirty);
 
+  // Broadcast dirty state to the layout (for tab blocking)
+  useEffect(() => {
+    setDirty(isDirty);
+    return () => setDirty(false); // clear on unmount
+  }, [isDirty, setDirty]);
+
   // Autosave draft whenever core state changes
   useEffect(() => {
     if (!isDirty) return;
@@ -187,11 +195,13 @@ export default function WeightWorkoutPage() {
     const ok = window.confirm("Discard this workout?");
     if (!ok) return;
     clearDraft();
+    setDirty(false);
     navigate("/exercises");
   };
 
   const handleFinish = () => {
     if (!sets.length) {
+      setDirty(false);
       navigate("/exercises");
       return;
     }
@@ -205,7 +215,8 @@ export default function WeightWorkoutPage() {
       sets,
     };
 
-    clearDraft(); // remove the draft when finishing
+    clearDraft();
+    setDirty(false);
     navigate("/save-workout", { state: summary });
   };
 
