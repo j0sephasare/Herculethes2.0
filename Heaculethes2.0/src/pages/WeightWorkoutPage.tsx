@@ -1,5 +1,4 @@
 // src/pages/WeightWorkoutPage.tsx
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -10,6 +9,10 @@ import type {
 } from "../types/workout";
 import useUnsavedChanges from "../hooks/useUnsavedChanges";
 import { useWorkoutGuard } from "../guards/WorkoutGuard";
+
+// Olympus header backdrop (optional – remove if not using this asset)
+// If you have Olympus2.jpg already (used on other pages), you can import it.
+// import OLYMPUS_BG_URL from "../assets/Olympus2.jpg";
 
 const EXERCISES: WorkoutExercise[] = [
   { id: "squat", name: "Squat (Barbell)", muscleGroup: "Quadriceps" },
@@ -240,42 +243,60 @@ export default function WeightWorkoutPage() {
   );
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top bar: duration, volume, sets + Finish */}
-      <header className="px-4 pt-3 pb-2 border-b border-slate-800 bg-slate-950">
-        <div className="flex items-center justify-between mb-2">
-          <button
-            onClick={handleDiscard}
-            className="text-xs text-slate-400 hover:text-slate-200"
-          >
-            ⟵ Log Workout
-          </button>
-          <button
-            onClick={handleFinish}
-            className="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold hover:bg-blue-500"
-          >
-            Finish
-          </button>
-        </div>
+    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
+      {/* Olympus header */}
+      <header
+        className="relative border-b border-slate-800"
+        // If you imported OLYMPUS_BG_URL above, you can enable the background here:
+        // style={{
+        //   backgroundImage: `linear-gradient(to bottom, rgba(2,6,23,0.70), rgba(2,6,23,0.9)), url(${OLYMPUS_BG_URL})`,
+        //   backgroundSize: "cover",
+        //   backgroundPosition: "center",
+        // }}
+      >
+        <div className="px-4 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-amber-300 flex items-center justify-center shadow-[0_0_0_2px_rgba(234,179,8,0.3)]">
+                <span className="text-slate-900 text-lg">Λ</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-extrabold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-400">
+                  Log Workout
+                </h1>
+                <p className="text-[11px] uppercase tracking-wide text-yellow-200/80">
+                  Track sets · volume · time
+                </p>
+              </div>
+            </div>
 
-        <div className="flex gap-4 text-xs text-slate-300">
-          <div>
-            <p className="uppercase tracking-wide text-[10px] text-slate-500">
-              Duration
-            </p>
-            <p>{formatDuration(elapsed)}</p>
+            <button
+              onClick={handleFinish}
+              className="rounded-full bg-gradient-to-r from-yellow-500 to-amber-400 text-slate-900 px-4 py-1.5 text-sm font-semibold hover:from-yellow-400 hover:to-amber-300 shadow-[0_8px_24px_rgba(234,179,8,0.25)]"
+            >
+              Finish
+            </button>
           </div>
-          <div>
-            <p className="uppercase tracking-wide text-[10px] text-slate-500">
-              Volume
-            </p>
-            <p>{totalVolumeKg} kg</p>
-          </div>
-          <div>
-            <p className="uppercase tracking-wide text-[10px] text-slate-500">
-              Sets
-            </p>
-            <p>{totalDoneSets}</p>
+
+          <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
+            <div className="rounded-xl bg-slate-900/70 border border-yellow-400/20 px-3 py-2">
+              <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
+                Duration
+              </p>
+              <p className="text-slate-100">{formatDuration(elapsed)}</p>
+            </div>
+            <div className="rounded-xl bg-slate-900/70 border border-yellow-400/20 px-3 py-2">
+              <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
+                Volume
+              </p>
+              <p className="text-slate-100">{totalVolumeKg} kg</p>
+            </div>
+            <div className="rounded-xl bg-slate-900/70 border border-yellow-400/20 px-3 py-2">
+              <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
+                Sets
+              </p>
+              <p className="text-slate-100">{totalDoneSets}</p>
+            </div>
           </div>
         </div>
       </header>
@@ -284,7 +305,7 @@ export default function WeightWorkoutPage() {
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {exercisesInWorkout.length === 0 ? (
           <div className="mt-8 flex flex-col items-center gap-3 text-center">
-            <div className="h-14 w-14 rounded-full border border-slate-700 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-full border border-yellow-400/30 bg-slate-900/70 flex items-center justify-center">
               <span className="text-2xl">🏋️‍♂️</span>
             </div>
             <div>
@@ -298,7 +319,7 @@ export default function WeightWorkoutPage() {
           exercisesInWorkout.map((ex) => (
             <section
               key={ex.id}
-              className="rounded-2xl bg-slate-900/80 border border-slate-800 p-3 space-y-2"
+              className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-3 space-y-2"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -306,7 +327,7 @@ export default function WeightWorkoutPage() {
                     🧍
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-blue-400">
+                    <p className="text-sm font-semibold text-yellow-200">
                       {ex.name}
                     </p>
                     <p className="text-[11px] text-slate-400">
@@ -316,7 +337,7 @@ export default function WeightWorkoutPage() {
                 </div>
               </div>
 
-              <div className="mt-2 text-[11px] text-slate-500 grid grid-cols-4 gap-2 px-1">
+              <div className="mt-2 text-[11px] text-slate-400 grid grid-cols-4 gap-2 px-1">
                 <span>Set</span>
                 <span>Kg</span>
                 <span>Reps</span>
@@ -329,14 +350,16 @@ export default function WeightWorkoutPage() {
                   <div
                     key={s.id}
                     className={`mt-1 grid grid-cols-4 gap-2 items-center rounded-xl px-2 py-1 ${
-                      s.done ? "bg-emerald-700/40" : "bg-slate-900"
+                      s.done
+                        ? "bg-emerald-700/30 border border-emerald-500/40"
+                        : "bg-slate-900 border border-slate-800"
                     }`}
                   >
                     <span className="text-xs text-slate-300">
                       {idx + 1}
                     </span>
                     <input
-                      className="text-xs w-full rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-slate-50 outline-none focus:border-blue-500"
+                      className="text-xs w-full rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-slate-50 outline-none focus:border-yellow-400/60"
                       value={s.weight || ""}
                       onChange={(e) =>
                         handleSetChange(s.id, "weight", e.target.value)
@@ -344,7 +367,7 @@ export default function WeightWorkoutPage() {
                       inputMode="decimal"
                     />
                     <input
-                      className="text-xs w-full rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-slate-50 outline-none focus:border-blue-500"
+                      className="text-xs w-full rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-slate-50 outline-none focus:border-yellow-400/60"
                       value={s.reps || ""}
                       onChange={(e) =>
                         handleSetChange(s.id, "reps", e.target.value)
@@ -360,6 +383,7 @@ export default function WeightWorkoutPage() {
                             ? "bg-emerald-500 text-slate-900"
                             : "bg-slate-800 text-slate-300"
                         }`}
+                        aria-pressed={s.done}
                       >
                         ✓
                       </button>
@@ -367,6 +391,7 @@ export default function WeightWorkoutPage() {
                         type="button"
                         onClick={() => deleteSet(s.id)}
                         className="h-6 w-6 rounded-md bg-slate-800 text-[11px] text-slate-400 hover:text-red-400"
+                        aria-label="Delete set"
                       >
                         ✕
                       </button>
@@ -377,7 +402,7 @@ export default function WeightWorkoutPage() {
               <button
                 type="button"
                 onClick={() => addAnotherSetForExercise(ex.id)}
-                className="mt-2 text-[11px] text-blue-400 hover:underline"
+                className="mt-2 text-[11px] text-yellow-200 hover:underline"
               >
                 + Add set
               </button>
@@ -396,7 +421,7 @@ export default function WeightWorkoutPage() {
         </button>
         <button
           onClick={handleAddExercise}
-          className="flex-1 rounded-xl bg-blue-600 text-sm py-2 font-semibold hover:bg-blue-500"
+          className="flex-1 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-400 text-slate-900 text-sm py-2 font-semibold hover:from-yellow-400 hover:to-amber-300 shadow-[0_8px_24px_rgba(234,179,8,0.25)]"
         >
           + Add exercise
         </button>
@@ -405,7 +430,7 @@ export default function WeightWorkoutPage() {
       {/* Exercise picker overlay */}
       {showPicker && (
         <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-t-3xl bg-slate-950 border-t border-slate-800 p-4 space-y-3">
+          <div className="w-full max-w-md rounded-t-3xl bg-slate-950 border-t border-yellow-400/20 p-4 space-y-3">
             <div className="flex items-center justify-between mb-1">
               <button
                 className="text-sm text-slate-400"
@@ -413,11 +438,11 @@ export default function WeightWorkoutPage() {
               >
                 Cancel
               </button>
-              <p className="text-xs font-semibold text-slate-300">
+              <p className="text-xs font-semibold text-yellow-200 uppercase tracking-wider">
                 Add Exercise
               </p>
               <button
-                className="text-sm text-blue-400 disabled:opacity-40"
+                className="text-sm text-yellow-200 disabled:opacity-40"
                 disabled={!selectedExercise}
                 onClick={confirmAddExercise}
               >
@@ -426,7 +451,7 @@ export default function WeightWorkoutPage() {
             </div>
 
             <input
-              className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-sm text-slate-50 outline-none focus:border-blue-500"
+              className="w-full rounded-xl bg-slate-900 border border-yellow-400/20 px-3 py-2 text-sm text-slate-50 outline-none focus:border-yellow-400/50"
               placeholder="Search exercise or muscle"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -440,8 +465,10 @@ export default function WeightWorkoutPage() {
                     key={ex.id}
                     type="button"
                     onClick={() => setSelectedExercise(ex)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left ${
-                      isSelected ? "bg-blue-600/30" : "bg-slate-900"
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left border ${
+                      isSelected
+                        ? "bg-yellow-500/10 border-yellow-400/40"
+                        : "bg-slate-900 border-yellow-400/20 hover:border-yellow-400/35"
                     }`}
                   >
                     <div className="flex items-center gap-3">

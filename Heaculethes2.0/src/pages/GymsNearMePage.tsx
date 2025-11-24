@@ -3,7 +3,9 @@
 // Tell TS that "google" will exist once the script is loaded
 declare const google: any;
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+/* -------------------------------- Types ---------------------------------- */
 
 type Gym = {
   id: string;
@@ -19,6 +21,8 @@ type LocationState =
   | { status: "getting" }
   | { status: "got"; lat: number; lon: number }
   | { status: "error"; message: string };
+
+/* ------------------------------ Utils ------------------------------------ */
 
 function toRad(deg: number) {
   return (deg * Math.PI) / 180;
@@ -39,6 +43,66 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   return R * c;
 }
 
+/* -------------------------- Dark Map Style ------------------------------- */
+/* Subtle high-contrast dark theme with gold-ish POIs */
+const DARK_MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#0b1220" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0b1220" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#9aa4b2" }] },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#c7b28a" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#c7b28a" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#0f1a2b" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9aa4b2" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#111a2c" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1a2742" }],
+  },
+  {
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9aa4b2" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "geometry",
+    stylers: [{ color: "#1a2742" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#0a1529" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9aa4b2" }],
+  },
+];
+
+/* ------------------------------- Component -------------------------------- */
+
 export default function GymsNearMePage() {
   const [location, setLocation] = useState<LocationState>({ status: "idle" });
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -48,17 +112,20 @@ export default function GymsNearMePage() {
   const [mapsError, setMapsError] = useState<string | null>(null);
   const [mapsLoaded, setMapsLoaded] = useState(false);
 
+  const [radiusKm, setRadiusKm] = useState<number>(3); // switchable radius
+  const [retryKey, setRetryKey] = useState<number>(0); // bump to retry Overpass
+
   const mapDivRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any | null>(null);
   const userMarkerRef = useRef<any | null>(null);
   const gymMarkersRef = useRef<any[]>([]);
-  const infoWindowRef = useRef<any | null>(null); // shared InfoWindow for all gym pins
+  const infoWindowRef = useRef<any | null>(null); // shared InfoWindow
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as
     | string
     | undefined;
 
-  // 1) Load Google Maps JS script once
+  /* ------------------- 1) Load Google Maps script once ------------------- */
   useEffect(() => {
     if (!apiKey) {
       setMapsError(
@@ -66,13 +133,11 @@ export default function GymsNearMePage() {
       );
       return;
     }
-
     // Already loaded?
     if ((window as any).google?.maps) {
       setMapsLoaded(true);
       return;
     }
-
     // Already loading?
     if (document.getElementById("gmaps-script")) return;
 
@@ -82,19 +147,15 @@ export default function GymsNearMePage() {
     script.async = true;
     script.defer = true;
 
-    script.onload = () => {
-      setMapsLoaded(true);
-    };
-
-    script.onerror = () => {
+    script.onload = () => setMapsLoaded(true);
+    script.onerror = () =>
       setMapsError("Failed to load Google Maps. Check your API key / network.");
-    };
 
     document.body.appendChild(script);
   }, [apiKey]);
 
-  // 2) Get user location
-  useEffect(() => {
+  /* ----------------------- 2) Get current location ----------------------- */
+  const requestLocation = () => {
     if (!("geolocation" in navigator)) {
       setLocation({
         status: "error",
@@ -102,7 +163,6 @@ export default function GymsNearMePage() {
       });
       return;
     }
-
     setLocation({ status: "getting" });
 
     navigator.geolocation.getCurrentPosition(
@@ -120,14 +180,16 @@ export default function GymsNearMePage() {
               : "Failed to get your location.",
         });
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  useEffect(() => {
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 3) Fetch gyms from Overpass when we have location
+  /* ------------------- 3) Fetch gyms from Overpass API ------------------- */
   useEffect(() => {
     if (location.status !== "got") return;
 
@@ -137,34 +199,29 @@ export default function GymsNearMePage() {
 
       try {
         const { lat, lon } = location;
-        const radius = 3000; // 3km radius
+        const radiusMeters = Math.round(radiusKm * 1000);
 
         const query = `
-          [out:json];
+          [out:json][timeout:25];
           (
-            node["leisure"="fitness_centre"](around:${radius},${lat},${lon});
-            node["sport"="fitness"](around:${radius},${lat},${lon});
+            node["leisure"="fitness_centre"](around:${radiusMeters},${lat},${lon});
+            node["sport"="fitness"](around:${radiusMeters},${lat},${lon});
           );
-          out center 40;
+          out center 60;
         `;
 
         const res = await fetch("https://overpass-api.de/api/interpreter", {
           method: "POST",
           body: query,
-          headers: {
-            "Content-Type": "text/plain;charset=UTF-8",
-          },
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
         });
 
-        if (!res.ok) {
-          throw new Error(`Overpass error: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Overpass error: ${res.status}`);
 
         const data = await res.json();
         const elements: any[] = data.elements || [];
 
         const gymsParsed: Gym[] = elements
-          // only keep nodes that actually have a *name* tag
           .filter(
             (el) =>
               el.type === "node" &&
@@ -174,7 +231,6 @@ export default function GymsNearMePage() {
           )
           .map((el) => {
             const name: string = el.tags.name.trim();
-
             const addressParts = [
               el.tags?.addr_street,
               el.tags?.addr_housenumber,
@@ -195,15 +251,14 @@ export default function GymsNearMePage() {
               address,
             };
           })
-          // sort by distance and limit number of gyms
           .sort((a, b) => a.distanceKm - b.distanceKm)
-          .slice(0, 20);
+          .slice(0, 25);
 
         setGyms(gymsParsed);
       } catch (err) {
         console.error(err);
         setGymsError(
-          "Failed to load gyms. The map service might be rate-limited, please try again in a moment."
+          "Failed to load gyms. The map service might be rate-limited—try again in a moment."
         );
       } finally {
         setLoadingGyms(false);
@@ -211,30 +266,28 @@ export default function GymsNearMePage() {
     };
 
     fetchGyms();
-  }, [location]);
+  }, [location, radiusKm, retryKey]);
 
-  // 4) Initialise the map once Google + location are ready
+  /* ----------------- 4) Init map once Google + location ready ------------ */
   useEffect(() => {
     if (!mapsLoaded) return;
     if (location.status !== "got") return;
     if (!mapDivRef.current) return;
-    if (mapRef.current) return; // map already created
+    if (mapRef.current) return; // already made
 
     const center = { lat: location.lat, lng: location.lon };
-
-    // No explicit google.maps.MapOptions type – avoids TS errors
     const mapOptions = {
       center,
       zoom: 14,
       disableDefaultUI: true,
       zoomControl: true,
-      // grabs scroll/drag so you don't get the "Use two fingers" overlay
       gestureHandling: "greedy",
+      styles: DARK_MAP_STYLE,
     };
 
     mapRef.current = new google.maps.Map(mapDivRef.current, mapOptions);
 
-    // Add user marker (blue dot style)
+    // User marker
     userMarkerRef.current = new google.maps.Marker({
       position: center,
       map: mapRef.current,
@@ -242,18 +295,18 @@ export default function GymsNearMePage() {
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 8,
-        fillColor: "#3b82f6",
+        fillColor: "#fbbf24", // amber-400
         fillOpacity: 1,
-        strokeColor: "white",
+        strokeColor: "#fff",
         strokeWeight: 2,
       },
     });
 
-    // Create one shared InfoWindow instance
+    // Shared InfoWindow
     infoWindowRef.current = new google.maps.InfoWindow();
   }, [mapsLoaded, location]);
 
-  // 5) Whenever gyms change, draw gym markers (with clickable InfoWindow)
+  /* -------------------- 5) Rebuild markers when gyms change -------------- */
   useEffect(() => {
     const map = mapRef.current;
     const infoWindow = infoWindowRef.current;
@@ -268,21 +321,30 @@ export default function GymsNearMePage() {
         position: { lat: gym.lat, lng: gym.lon },
         map,
         title: gym.name,
+        icon: {
+          url:
+            "data:image/svg+xml;charset=UTF-8," +
+            encodeURIComponent(
+              `<svg width="24" height="24" viewBox="0 0 24 24" fill="#c7b28a" xmlns="http://www.w3.org/2000/svg">
+                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+               </svg>`
+            ),
+          scaledSize: new google.maps.Size(26, 26),
+        },
       });
 
-      // Content for the InfoWindow
       const html = `
-        <div style="font-size:14px; font-weight:600;">${gym.name}</div>
+        <div style="font-size:14px; font-weight:700; color:#e5e7eb;">${gym.name}</div>
         ${
           gym.address
-            ? `<div style="font-size:12px; color:#555;">${gym.address}</div>`
+            ? `<div style="font-size:12px; color:#a1a1aa; margin:2px 0 6px;">${gym.address}</div>`
             : ""
         }
         <a href="https://www.google.com/maps/search/?api=1&query=${gym.lat},${
         gym.lon
       }"
            target="_blank"
-           style="font-size:12px; color:#1a73e8; text-decoration:none;">
+           style="font-size:12px; color:#fbbf24; text-decoration:none;">
           Open in Google Maps →
         </a>
       `;
@@ -296,34 +358,97 @@ export default function GymsNearMePage() {
     });
   }, [gyms]);
 
-  const renderLocationStatus = () => {
-    if (location.status === "getting") {
-      return <p className="text-xs text-slate-400">Getting your location…</p>;
-    }
-    if (location.status === "error") {
-      return <p className="text-xs text-red-300">{location.message}</p>;
-    }
-    if (location.status === "got") {
-      return (
-        <p className="text-xs text-slate-400">
-          Showing gyms within ~3 km of your current location.
-        </p>
-      );
-    }
-    return null;
+  /* -------------------------- Derived render bits ------------------------- */
+  const locationHint = useMemo(() => {
+    if (location.status === "getting")
+      return "Getting your location…";
+    if (location.status === "error") return location.message;
+    if (location.status === "got")
+      return `Showing gyms within ~${radiusKm} km of your location.`;
+    return "";
+  }, [location, radiusKm]);
+
+  const recenter = () => {
+    if (location.status !== "got" || !mapRef.current) return;
+    const center = { lat: location.lat, lng: location.lon };
+    mapRef.current.panTo(center);
+    mapRef.current.setZoom(14);
   };
+
+  const retryGyms = () => setRetryKey((k) => k + 1);
+
+  /* --------------------------------- JSX --------------------------------- */
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
-      <header className="px-4 pt-4 pb-3 border-b border-slate-800">
-        <h1 className="text-2xl font-bold">Gyms near you</h1>
-        <p className="text-sm text-slate-400">
-          We use your current location to find nearby gyms.
-        </p>
+      {/* Header */}
+      <header className="px-4 pt-5 pb-4 border-b border-yellow-400/20 bg-slate-950/90">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-yellow-500/30 to-amber-400/20 border border-yellow-400/30 flex items-center justify-center text-lg">
+            🗺️
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              Gyms near you
+            </h1>
+            <p className="text-sm text-slate-400">
+              We use your current location to find nearby gyms.
+            </p>
+          </div>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
-        {renderLocationStatus()}
+        {/* Controls row */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {[1, 3, 5, 10].map((km) => (
+              <button
+                key={km}
+                onClick={() => setRadiusKm(km)}
+                className={`text-xs px-3 py-1 rounded-full border transition ${
+                  radiusKm === km
+                    ? "border-yellow-400/60 bg-yellow-500/15"
+                    : "border-slate-700 bg-slate-900 hover:border-slate-600"
+                }`}
+              >
+                {km} km
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={recenter}
+              className="text-xs px-3 py-1 rounded-full border border-slate-700 hover:border-slate-600"
+            >
+              Recenter
+            </button>
+            <button
+              onClick={retryGyms}
+              className="text-xs px-3 py-1 rounded-full border border-yellow-400/40 hover:bg-yellow-500/10"
+            >
+              Retry
+            </button>
+            <button
+              onClick={requestLocation}
+              className="text-xs px-3 py-1 rounded-full border border-slate-700 hover:border-slate-600"
+            >
+              Refresh location
+            </button>
+          </div>
+        </div>
+
+        {/* Status / errors */}
+        {location.status !== "idle" && (
+          <p
+            className={`text-xs ${
+              location.status === "error" ? "text-red-300" : "text-slate-400"
+            }`}
+          >
+            {locationHint}
+          </p>
+        )}
 
         {mapsError && (
           <div className="rounded-lg bg-red-500/10 border border-red-500/40 px-3 py-2 text-sm text-red-200">
@@ -335,33 +460,42 @@ export default function GymsNearMePage() {
         <div className="rounded-2xl border border-slate-800 overflow-hidden">
           <div
             ref={mapDivRef}
-            className="w-full h-64 bg-slate-900 flex items-center justify-center text-xs text-slate-400"
+            className="w-full h-72 bg-slate-900 flex items-center justify-center text-xs text-slate-400"
           >
             {!mapsLoaded && !mapsError && <span>Loading map…</span>}
           </div>
         </div>
 
+        {/* Gyms error */}
         {gymsError && (
           <div className="rounded-lg bg-red-500/10 border border-red-500/40 px-3 py-2 text-sm text-red-200">
             {gymsError}
           </div>
         )}
 
+        {/* Loading state */}
         {location.status === "got" && loadingGyms && (
-          <p className="text-xs text-slate-400">Searching for gyms…</p>
+          <div className="grid gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="h-16 rounded-2xl bg-slate-900/80 border border-slate-800 animate-pulse"
+              />
+            ))}
+          </div>
         )}
 
+        {/* Empty state */}
         {location.status === "got" &&
           !loadingGyms &&
           gyms.length === 0 &&
           !gymsError && (
             <p className="text-xs text-slate-400">
-              No gyms found within 3 km. Try again later or expand the search
-              radius in the code.
+              No gyms found within {radiusKm} km. Try a larger radius.
             </p>
           )}
 
-        {/* Gym list below the map */}
+        {/* Gym list */}
         {gyms.length > 0 && (
           <section className="space-y-3">
             {gyms.map((gym) => {
@@ -369,29 +503,27 @@ export default function GymsNearMePage() {
                 gym.distanceKm < 1
                   ? `${Math.round(gym.distanceKm * 1000)} m`
                   : `${gym.distanceKm.toFixed(1)} km`;
-
               const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${gym.lat},${gym.lon}`;
-
               return (
                 <a
                   key={gym.id}
                   href={mapsUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="block rounded-2xl bg-slate-900/80 border border-slate-800 p-4 hover:border-blue-500/60 transition"
+                  className="block rounded-2xl bg-slate-900/80 border border-slate-800 p-4 hover:border-yellow-400/40 transition"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <p className="text-sm font-semibold">{gym.name}</p>
+                      <p className="text-sm font-semibold text-slate-100">
+                        {gym.name}
+                      </p>
                       {gym.address && (
-                        <p className="text-xs text-slate-400">
-                          {gym.address}
-                        </p>
+                        <p className="text-xs text-slate-400">{gym.address}</p>
                       )}
                     </div>
-                    <span className="text-xs text-slate-300">{distLabel}</span>
+                    <span className="text-xs text-amber-300">{distLabel}</span>
                   </div>
-                  <p className="mt-2 text-[11px] text-blue-400">
+                  <p className="mt-2 text-[11px] text-yellow-300/90">
                     Open in Google Maps →
                   </p>
                 </a>

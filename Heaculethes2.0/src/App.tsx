@@ -21,17 +21,20 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
-        <p className="text-slate-300 text-sm">Loading…</p>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-yellow-500 to-amber-300 animate-pulse flex items-center justify-center shadow-[0_0_0_3px_rgba(234,179,8,0.2)]">
+            <span className="text-slate-900 font-bold">Λ</span>
+          </div>
+          <p className="text-sm text-yellow-200/80">Summoning the gods…</p>
+        </div>
       </div>
     );
   }
 
-  // Not logged in → only show login/register
   if (!user) {
     return <LoginPage />;
   }
 
-  // Logged in → keep nav persistent with a layout route
   return (
     <Routes>
       <Route path="/" element={<AppShell />}>

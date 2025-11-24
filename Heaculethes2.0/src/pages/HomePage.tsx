@@ -1,17 +1,14 @@
 // src/pages/HomePage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  doc,
-} from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, doc } from "firebase/firestore";
 
 import { useAuth } from "../auth/AuthContext";
 import { db } from "../firebase";
 import type { WorkoutDoc, WorkoutSet } from "../types/workout";
+
+// 🎨 Background art used in the hero banner (same as Login)
+import OLYMPUS_BG_URL from "../assets/Olympus2.jpg";
 
 type FirestoreWorkout = {
   title: string;
@@ -57,11 +54,8 @@ function groupSetsByExercise(sets: WorkoutSet[]) {
   for (const s of sets) {
     const key = s.exerciseId || s.exerciseName;
     const existing = map.get(key);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      map.set(key, { name: s.exerciseName, count: 1 });
-    }
+    if (existing) existing.count += 1;
+    else map.set(key, { name: s.exerciseName, count: 1 });
   }
 
   return Array.from(map.values());
@@ -144,17 +138,28 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
-      <header className="px-4 pt-4 pb-3 border-b border-slate-800">
-        <h1 className="text-2xl font-bold">Home</h1>
-        {user ? (
-          <p className="text-sm text-slate-400">
-            Welcome back, {greetingName}.
-          </p>
-        ) : (
-          <p className="text-sm text-slate-400">
-            Log in to start tracking your workouts.
-          </p>
-        )}
+      {/* Olympus hero strip */}
+      <header
+        className="relative border-b border-slate-800"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(2,6,23,0.70), rgba(2,6,23,0.85)), url(${OLYMPUS_BG_URL})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="px-4 py-6 sm:py-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500 to-amber-300 shadow-[0_0_0_2px_rgba(234,179,8,0.35),0_10px_40px_rgba(234,179,8,0.2)] flex items-center justify-center">
+              <span className="text-xl text-slate-900">Λ</span>
+            </div>
+            <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-400">
+              Hall of Training
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm tracking-wide uppercase text-yellow-200/80">
+              {user ? `Welcome back, ${greetingName}.` : "Log in to begin your legend."}
+            </p>
+          </div>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -170,13 +175,15 @@ export default function HomePage() {
 
         {user && workouts && !hasWorkouts && (
           <div className="mt-6 flex flex-col items-center gap-3 text-center">
-            <div className="h-14 w-14 rounded-full border border-slate-700 flex items-center justify-center">
-              <span className="text-2xl">🏋️‍♂️</span>
+            <div className="h-14 w-14 rounded-full border border-yellow-500/40 bg-slate-900 flex items-center justify-center shadow-[0_0_0_1px_rgba(148,163,184,0.15)]">
+              <span className="text-2xl">🏛️</span>
             </div>
             <div>
-              <p className="font-semibold">No workouts yet</p>
+              <p className="font-semibold text-yellow-200">
+                No workouts yet
+              </p>
               <p className="text-xs text-slate-400">
-                Start your first workout from the Exercises tab.
+                Start your first workout from the <span className="text-yellow-300">Exercises</span> tab.
               </p>
             </div>
           </div>
@@ -184,8 +191,8 @@ export default function HomePage() {
 
         {hasWorkouts && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-slate-300">
-              Recent workouts
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-yellow-200/80">
+              Recent Workouts
             </h2>
 
             {workouts!.map((w) => {
@@ -200,38 +207,39 @@ export default function HomePage() {
                 <button
                   key={w.id}
                   onClick={() => navigate(`/workouts/${w.id}`)}
-                  className="w-full text-left rounded-2xl bg-slate-900/80 border border-slate-800 p-4 space-y-2 hover:border-blue-500/60 transition"
+                  className="w-full text-left rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-4 space-y-2 hover:border-yellow-400/40 hover:shadow-[0_0_0_1px_rgba(234,179,8,0.25)] transition"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold">
+                      <p className="text-sm font-semibold text-slate-100">
                         {w.title || "Workout"}
                       </p>
                       <p className="text-xs text-slate-400">{label}</p>
                     </div>
+                    <div className="text-yellow-300 text-lg">⚡</div>
                   </div>
 
                   {w.description && (
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-300/90 mt-1">
                       {w.description}
                     </p>
                   )}
 
-                  <div className="mt-2 grid grid-cols-3 gap-3 text-xs text-slate-300">
+                  <div className="mt-2 grid grid-cols-3 gap-3 text-xs text-slate-200">
                     <div>
-                      <p className="uppercase tracking-wide text-[10px] text-slate-500">
+                      <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
                         Time
                       </p>
                       <p>{formatDuration(w.durationSeconds)}</p>
                     </div>
                     <div>
-                      <p className="uppercase tracking-wide text-[10px] text-slate-500">
+                      <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
                         Volume
                       </p>
                       <p>{w.totalVolumeKg} kg</p>
                     </div>
                     <div>
-                      <p className="uppercase tracking-wide text-[10px] text-slate-500">
+                      <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
                         Sets
                       </p>
                       <p>{w.totalDoneSets}</p>
@@ -245,11 +253,11 @@ export default function HomePage() {
                           key={ex.name}
                           className="flex items-center gap-3 text-xs"
                         >
-                          <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-lg">
-                            🧍
+                          <div className="h-8 w-8 rounded-full bg-slate-800 border border-yellow-400/20 flex items-center justify-center text-lg">
+                            🏋️
                           </div>
                           <p className="text-slate-200">
-                            <span className="font-semibold">
+                            <span className="font-semibold text-yellow-200">
                               {ex.count} set{ex.count > 1 ? "s" : ""}
                             </span>{" "}
                             {ex.name}
@@ -257,7 +265,7 @@ export default function HomePage() {
                         </div>
                       ))}
                       {remaining > 0 && (
-                        <p className="text-[11px] text-blue-400">
+                        <p className="text-[11px] text-yellow-300">
                           See {remaining} more exercise
                           {remaining > 1 ? "s" : ""} →
                         </p>

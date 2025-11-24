@@ -17,6 +17,9 @@ import type { WorkoutDoc, WorkoutSet } from "../types/workout";
 import { useNavigate } from "react-router-dom";
 import ProgressDashboard from "../components/ProgressDashboard";
 
+// Olympus hero art (same as other pages)
+import OLYMPUS_BG_URL from "../assets/Olympus2.jpg";
+
 type FirestoreWorkout = {
   title: string;
   description?: string;
@@ -212,9 +215,28 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
-      <header className="px-4 pt-4 pb-3 border-b border-slate-800">
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="text-sm text-slate-400">Your training overview.</p>
+      {/* Olympus hero */}
+      <header
+        className="relative border-b border-slate-800"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(2,6,23,0.70), rgba(2,6,23,0.85)), url(${OLYMPUS_BG_URL})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="px-4 py-6 sm:py-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500 to-amber-300 shadow-[0_0_0_2px_rgba(234,179,8,0.35),0_10px_40px_rgba(234,179,8,0.2)] flex items-center justify-center">
+              <span className="text-xl text-slate-900">Λ</span>
+            </div>
+            <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-400">
+              Profile
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm tracking-wide uppercase text-yellow-200/80">
+              Your training overview
+            </p>
+          </div>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -225,21 +247,21 @@ export default function ProfilePage() {
         )}
 
         {/* User card + avatar */}
-        <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 flex items-center gap-4">
+        <section className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-4 flex items-center gap-4">
           <div className="relative">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt="Avatar"
-                className="h-16 w-16 rounded-full object-cover border border-slate-700"
+                className="h-16 w-16 rounded-full object-cover border border-yellow-400/20"
               />
             ) : (
-              <div className="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-yellow-500 to-amber-300 text-slate-900 flex items-center justify-center text-2xl font-extrabold border border-yellow-400/40">
                 {initial}
               </div>
             )}
 
-            <label className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-[11px] cursor-pointer hover:bg-slate-800">
+            <label className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-slate-900 border border-yellow-400/30 flex items-center justify-center text-[11px] cursor-pointer hover:bg-slate-800">
               {uploadingAvatar ? "…" : "✎"}
               <input
                 type="file"
@@ -253,14 +275,14 @@ export default function ProfilePage() {
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2">
               <input
-                className="flex-1 rounded-md bg-slate-950/40 border border-slate-700 px-2 py-1 text-sm outline-none focus:border-blue-500"
+                className="flex-1 rounded-md bg-slate-950/40 border border-yellow-400/20 px-2 py-1 text-sm outline-none focus:border-yellow-400/50"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
               />
               <button
                 onClick={handleNameSave}
                 disabled={savingName || editName.trim() === fallbackName}
-                className="text-xs px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-500 disabled:opacity-60"
+                className="text-xs px-3 py-1 rounded-md bg-gradient-to-r from-yellow-500 to-amber-400 text-slate-900 font-semibold hover:from-yellow-400 hover:to-amber-300 disabled:opacity-60 shadow-[0_8px_24px_rgba(234,179,8,0.25)]"
               >
                 {savingName ? "Saving…" : "Save"}
               </button>
@@ -269,15 +291,15 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* 🔥 Progress & Analytics Dashboard */}
+        {/* Progress & Analytics Dashboard */}
         <section>
           <ProgressDashboard workouts={workouts ?? []} />
         </section>
 
         {/* Lifetime stats */}
-        <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-200">
-            Lifetime stats
+        <section className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-4 space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-yellow-200/90">
+            Lifetime Stats
           </h2>
           {!hasWorkouts && (
             <p className="text-xs text-slate-400">
@@ -286,38 +308,38 @@ export default function ProfilePage() {
           )}
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2">
-              <p className="uppercase tracking-wide text-[10px] text-slate-500">
+            <div className="rounded-xl bg-slate-950/40 border border-yellow-400/20 px-3 py-2">
+              <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
                 Workouts
               </p>
-              <p className="mt-1 text-base font-semibold">
+              <p className="mt-1 text-base font-semibold text-slate-100">
                 {stats.totalWorkouts}
               </p>
             </div>
 
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2">
-              <p className="uppercase tracking-wide text-[10px] text-slate-500">
+            <div className="rounded-xl bg-slate-950/40 border border-yellow-400/20 px-3 py-2">
+              <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
                 Volume
               </p>
-              <p className="mt-1 text-base font-semibold">
+              <p className="mt-1 text-base font-semibold text-slate-100">
                 {stats.totalVolumeKg} kg
               </p>
             </div>
 
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2">
-              <p className="uppercase tracking-wide text-[10px] text-slate-500">
+            <div className="rounded-xl bg-slate-950/40 border border-yellow-400/20 px-3 py-2">
+              <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
                 Sets
               </p>
-              <p className="mt-1 text-base font-semibold">
+              <p className="mt-1 text-base font-semibold text-slate-100">
                 {stats.totalSets}
               </p>
             </div>
 
-            <div className="rounded-xl bg-slate-950/40 border border-slate-800 px-3 py-2">
-              <p className="uppercase tracking-wide text-[10px] text-slate-500">
+            <div className="rounded-xl bg-slate-950/40 border border-yellow-400/20 px-3 py-2">
+              <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
                 Time trained
               </p>
-              <p className="mt-1 text-base font-semibold">
+              <p className="mt-1 text-base font-semibold text-slate-100">
                 {formatDuration(stats.totalDurationSeconds)}
               </p>
             </div>
@@ -326,8 +348,8 @@ export default function ProfilePage() {
 
         {/* Recent workouts preview */}
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-200">
-            Recent workouts
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-yellow-200/90">
+            Recent Workouts
           </h2>
           {!hasWorkouts && (
             <p className="text-xs text-slate-400">
@@ -345,25 +367,25 @@ export default function ProfilePage() {
             return (
               <div
                 key={w.id}
-                className="rounded-2xl bg-slate-900/80 border border-slate-800 p-3 space-y-1"
+                className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-3 space-y-1 hover:border-yellow-400/35 transition"
               >
-                <p className="text-sm font-semibold">{w.title}</p>
+                <p className="text-sm font-semibold text-slate-100">{w.title}</p>
                 <p className="text-[11px] text-slate-400">{label}</p>
-                <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
+                <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] text-slate-200">
                   <div>
-                    <p className="uppercase tracking-wide text-[9px] text-slate-500">
+                    <p className="uppercase tracking-wide text-[9px] text-yellow-200/70">
                       Time
                     </p>
                     <p>{formatDuration(w.durationSeconds)}</p>
                   </div>
                   <div>
-                    <p className="uppercase tracking-wide text-[9px] text-slate-500">
+                    <p className="uppercase tracking-wide text-[9px] text-yellow-200/70">
                       Volume
                     </p>
                     <p>{w.totalVolumeKg} kg</p>
                   </div>
                   <div>
-                    <p className="uppercase tracking-wide text-[9px] text-slate-500">
+                    <p className="uppercase tracking-wide text-[9px] text-yellow-200/70">
                       Sets
                     </p>
                     <p>{w.totalDoneSets}</p>
@@ -378,23 +400,23 @@ export default function ProfilePage() {
         <section className="space-y-2">
           <button
             onClick={() => navigate("/macros")}
-            className="w-full rounded-xl border border-blue-600/70 text-blue-400 text-sm py-2 font-semibold hover:bg-blue-900/20"
+            className="w-full rounded-xl border border-yellow-400/30 text-yellow-200 text-sm py-2 font-semibold hover:bg-yellow-500/10"
           >
-            Open macro calculator
+            Open Macro Calculator
           </button>
 
           <button
             onClick={() => navigate("/gyms")}
-            className="w-full rounded-xl border border-emerald-600/70 text-emerald-400 text-sm py-2 font-semibold hover:bg-emerald-900/20"
+            className="w-full rounded-xl border border-yellow-400/30 text-yellow-200 text-sm py-2 font-semibold hover:bg-yellow-500/10"
           >
-            Find gyms near me
+            Find Gyms Near Me
           </button>
 
           <button
             onClick={logout}
-            className="w-full rounded-xl border border-red-600/70 text-red-400 text-sm py-2 font-semibold hover:bg-red-900/20"
+            className="w-full rounded-xl bg-gradient-to-r from-yellow-500 to-amber-400 text-slate-900 text-sm py-2 font-semibold hover:from-yellow-400 hover:to-amber-300"
           >
-            Log out
+            Log Out
           </button>
         </section>
       </main>

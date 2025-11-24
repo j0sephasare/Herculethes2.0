@@ -87,27 +87,42 @@ export default function ChallengesPage() {
   const toggleExercise = (id: string) =>
     setCompleted((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // FIX #1 — Full-bleed hero image with proper positioning
+  // Hero image style (keep athlete visible)
   const heroStyle: CSSProperties = selectedChallenge.image
     ? {
-        backgroundImage: `url(${selectedChallenge.image})`,
+        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(2,6,23,0.85)), url(${selectedChallenge.image})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
-        minHeight: "260px", // ensures Ronaldo's face is visible
+        minHeight: "260px",
       }
     : {};
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
-      <header className="px-4 pt-4 pb-3 border-b border-slate-800">
-        <h1 className="text-2xl font-bold">Challenges</h1>
-        <p className="text-sm text-slate-400">Choose a challenge and train like the pros.</p>
+      {/* Olympus header */}
+      <header className="relative border-b border-slate-800">
+        <div className="px-4 py-6 sm:py-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500 to-amber-300 shadow-[0_0_0_2px_rgba(234,179,8,0.35),0_10px_40px_rgba(234,179,8,0.2)] flex items-center justify-center">
+              <span className="text-xl text-slate-900">Λ</span>
+            </div>
+            <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-400">
+              Challenges
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm tracking-wide uppercase text-yellow-200/80">
+              Choose a challenge and train like the pros
+            </p>
+          </div>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Challenge picker */}
         <section className="space-y-3">
-          <p className="text-xs font-semibold text-slate-400 uppercase">Pick a challenge</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-yellow-200/80">
+            Pick a Challenge
+          </p>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {CHALLENGES.map((challenge) => {
               const isActive = challenge.id === selectedChallengeId;
@@ -118,33 +133,32 @@ export default function ChallengesPage() {
                 <button
                   key={challenge.id}
                   onClick={() => setSelectedChallengeId(challenge.id)}
-                  className={`text-left rounded-2xl border px-4 py-3 transition ${
+                  className={`text-left rounded-2xl p-4 transition bg-slate-900/70 backdrop-blur border ${
                     isActive
-                      ? "border-blue-500/70 bg-blue-500/10"
-                      : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
+                      ? "border-yellow-400/40 shadow-[0_0_0_1px_rgba(234,179,8,0.25)]"
+                      : "border-yellow-400/20 hover:border-yellow-400/35"
                   }`}
                 >
-                  <p className="text-[11px] uppercase text-slate-400">{challenge.athlete}</p>
-                  <p className="mt-1 text-sm font-semibold">{challenge.name}</p>
-                  <p className="mt-1 text-[11px] text-slate-400">{challenge.level} · {challenge.duration}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{challengePct}% complete</p>
+                  <p className="text-[11px] uppercase text-yellow-200/80">{challenge.athlete}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-100">{challenge.name}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    {challenge.level} · {challenge.duration}
+                  </p>
+                  <p className="mt-2 text-[11px] text-yellow-300">{challengePct}% complete</p>
                 </button>
               );
             })}
           </div>
         </section>
 
-        {/* Hero Section with Full Background */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden">
-
-          {/* HERO IMAGE WITH DARK GRADIENT */}
+        {/* Selected challenge card */}
+        <section className="rounded-2xl border border-yellow-400/20 bg-slate-900/70 backdrop-blur overflow-hidden">
+          {/* Hero */}
           <div className="relative w-full" style={heroStyle}>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-slate-950/95" />
-
             <div className="relative p-5 space-y-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide text-blue-300 font-semibold">
+                  <p className="text-[11px] uppercase tracking-wide text-yellow-200/80 font-semibold">
                     {selectedChallenge.athlete}
                   </p>
                   <h2 className="text-xl font-bold text-white drop-shadow">
@@ -152,26 +166,30 @@ export default function ChallengesPage() {
                   </h2>
                 </div>
 
-                <div className="text-right text-[11px] text-slate-200">
-                  <p>{completedCount}/{totalCount} done</p>
-                  <p className="mt-0.5">Level: <span className="font-semibold">{selectedChallenge.level}</span></p>
+                <div className="text-right text-[11px] text-slate-100">
+                  <p>
+                    {completedCount}/{totalCount} done
+                  </p>
+                  <p className="mt-0.5">
+                    Level: <span className="font-semibold">{selectedChallenge.level}</span>
+                  </p>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-200">
+              <p className="text-xs text-slate-100">
                 <span className="font-semibold">Duration:</span> {selectedChallenge.duration} ·{" "}
                 <span className="font-semibold">Focus:</span> {selectedChallenge.focus}
               </p>
 
-              <p className="text-sm text-slate-100 max-w-2xl drop-shadow">
+              <p className="text-sm text-slate-50 max-w-2xl drop-shadow">
                 {selectedChallenge.description}
               </p>
 
               <div className="space-y-1 pt-2 max-w-md">
-                <p className="text-[11px] text-slate-200">Progress</p>
+                <p className="text-[11px] text-yellow-200/80">Progress</p>
                 <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
                   <div
-                    className="h-full bg-blue-500 transition-all"
+                    className="h-full bg-gradient-to-r from-yellow-500 to-amber-400 transition-all"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
@@ -182,8 +200,8 @@ export default function ChallengesPage() {
 
           {/* Checklist */}
           <div className="px-5 pb-4 pt-3">
-            <p className="text-xs font-semibold text-slate-400 uppercase mb-2">
-              Workout checklist
+            <p className="text-xs font-semibold uppercase tracking-wider text-yellow-200/80 mb-2">
+              Workout Checklist
             </p>
 
             <div className="space-y-2">
@@ -194,7 +212,9 @@ export default function ChallengesPage() {
                     key={exercise.id}
                     onClick={() => toggleExercise(exercise.id)}
                     className={`w-full rounded-xl border px-3 py-3 text-left text-xs flex items-start gap-3 transition ${
-                      isDone ? "border-emerald-500/70 bg-emerald-500/10" : "border-slate-800 bg-slate-900/70 hover:border-slate-700"
+                      isDone
+                        ? "border-emerald-500/70 bg-emerald-500/10"
+                        : "border-yellow-400/20 bg-slate-900/70 hover:border-yellow-400/35"
                     }`}
                   >
                     <div className="mt-[2px]">
@@ -202,19 +222,19 @@ export default function ChallengesPage() {
                         className={`h-4 w-4 rounded-full border flex items-center justify-center ${
                           isDone ? "border-emerald-400 bg-emerald-500" : "border-slate-500"
                         }`}
+                        aria-checked={isDone}
+                        role="checkbox"
                       >
                         {isDone && <span className="text-[10px] text-slate-950">✓</span>}
                       </div>
                     </div>
 
                     <div className="flex-1">
-                      <p className="font-semibold text-[13px]">{exercise.title}</p>
+                      <p className="font-semibold text-[13px] text-slate-100">{exercise.title}</p>
                       <p className="text-[11px] text-slate-400">{exercise.description}</p>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 whitespace-nowrap">
-                      {exercise.setsReps}
-                    </p>
+                    <p className="text-[11px] text-slate-400 whitespace-nowrap">{exercise.setsReps}</p>
                   </button>
                 );
               })}
