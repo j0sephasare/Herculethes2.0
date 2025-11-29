@@ -83,7 +83,7 @@ Project → Settings → Environment Variables
 
 1. Go to Firebase Console
 
-2. reate Project → Add a Web App → copy config values
+2. create Project → Add a Web App → copy config values
 
 3. Enable the following services:
 
@@ -116,6 +116,7 @@ Once running, you can:
 .🗂️ Manage workouts – view, delete, or (soon) reuse templates
 
 ## 🧭 Project Architecture
+```bash
 src/
  ┣ components/        → Reusable UI components (cards, charts, etc.)
  ┣ pages/             → Page-level components (Home, Profile, SaveWorkout…)
@@ -124,7 +125,7 @@ src/
  ┣ assets/            → Images (Olympus art, icons, etc.)
  ┣ types/             → Shared TypeScript interfaces
  ┗ main.tsx           → Vite entry point
-
+```
 ## 🌍 APIs Used
 Service	Purpose
 Firebase Auth & Firestore	Secure, scalable user + data management
