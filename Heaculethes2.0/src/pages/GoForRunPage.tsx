@@ -148,7 +148,7 @@ export default function GoForRunPage() {
         initialPointRef.current = p;
         lastPointRef.current = p;
 
-        // GPS quality hint (very rough)
+        // GPS quality hint 
         setGpsQuality(acc && acc > 40 ? "poor" : acc && acc > 20 ? "ok" : "good");
 
         const center = { lat, lng: lon };

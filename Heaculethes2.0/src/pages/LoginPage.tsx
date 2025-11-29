@@ -6,7 +6,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { useAuth } from "../auth/AuthContext";
 import { auth } from "../firebase";
 
-// ⛰️ Background image (use the uploaded file path)
+//  Background image 
 import OLYMPUS_BG_URL from "../assets/Olympus2.jpg";
 
 type Mode = "login" | "register" | "reset";

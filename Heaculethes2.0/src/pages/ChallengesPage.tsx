@@ -87,7 +87,7 @@ export default function ChallengesPage() {
   const toggleExercise = (id: string) =>
     setCompleted((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // Hero image style (keep athlete visible)
+  // Hero image style 
   const heroStyle: CSSProperties = selectedChallenge.image
     ? {
         backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(2,6,23,0.85)), url(${selectedChallenge.image})`,

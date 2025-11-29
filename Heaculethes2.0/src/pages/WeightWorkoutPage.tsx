@@ -10,9 +10,7 @@ import type {
 import useUnsavedChanges from "../hooks/useUnsavedChanges";
 import { useWorkoutGuard } from "../guards/WorkoutGuard";
 
-// Olympus header backdrop (optional – remove if not using this asset)
-// If you have Olympus2.jpg already (used on other pages), you can import it.
-// import OLYMPUS_BG_URL from "../assets/Olympus2.jpg";
+
 
 const EXERCISES: WorkoutExercise[] = [
   { id: "squat", name: "Squat (Barbell)", muscleGroup: "Quadriceps" },
@@ -247,7 +245,7 @@ export default function WeightWorkoutPage() {
       {/* Olympus header */}
       <header
         className="relative border-b border-slate-800"
-        // If you imported OLYMPUS_BG_URL above, you can enable the background here:
+        // If imported OLYMPUS_BG_URL can enable the background here:
         // style={{
         //   backgroundImage: `linear-gradient(to bottom, rgba(2,6,23,0.70), rgba(2,6,23,0.9)), url(${OLYMPUS_BG_URL})`,
         //   backgroundSize: "cover",

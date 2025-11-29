@@ -129,7 +129,7 @@ Carbs: ${result.carbs} g`;
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // ignore
+      
     }
   };
 

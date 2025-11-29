@@ -1,4 +1,3 @@
-// src/pages/HomePage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot, orderBy, query, doc } from "firebase/firestore";
@@ -7,7 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import { db } from "../firebase";
 import type { WorkoutDoc, WorkoutSet } from "../types/workout";
 
-// 🎨 Background art used in the hero banner (same as Login)
+// Background art used in the hero banner (same as Login)
 import OLYMPUS_BG_URL from "../assets/Olympus2.jpg";
 
 type FirestoreWorkout = {
@@ -20,6 +19,7 @@ type FirestoreWorkout = {
   finishedAt?: { toDate: () => Date };
   createdAt?: { toDate: () => Date };
   sets: WorkoutSet[];
+  media?: string[]; // media URLs (images/videos)
 };
 
 function formatDuration(sec: number) {
@@ -50,22 +50,26 @@ function formatDateLabel(date: Date) {
 
 function groupSetsByExercise(sets: WorkoutSet[]) {
   const map = new Map<string, { name: string; count: number }>();
-
   for (const s of sets) {
     const key = s.exerciseId || s.exerciseName;
     const existing = map.get(key);
     if (existing) existing.count += 1;
     else map.set(key, { name: s.exerciseName, count: 1 });
   }
-
   return Array.from(map.values());
 }
+
+// crude detector for video URLs (checks extension before any ?query)
+const isVideoUrl = (url: string) => {
+  const clean = url.split("?")[0].toLowerCase();
+  return /\.(mp4|webm|mov|m4v|ogg)$/.test(clean);
+};
 
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [workouts, setWorkouts] = useState<WorkoutDoc[] | null>(null);
+  const [workouts, setWorkouts] = useState<(WorkoutDoc & { media?: string[] })[] | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
 
   // Load workouts
@@ -79,7 +83,7 @@ export default function HomePage() {
     const q = query(workoutsCol, orderBy("createdAt", "desc"));
 
     const unsub = onSnapshot(q, (snap) => {
-      const items: WorkoutDoc[] = [];
+      const items: (WorkoutDoc & { media?: string[] })[] = [];
       snap.forEach((docSnap) => {
         const data = docSnap.data() as unknown as FirestoreWorkout;
         const createdAt = data.createdAt?.toDate() ?? null;
@@ -97,6 +101,7 @@ export default function HomePage() {
           totalVolumeKg: data.totalVolumeKg ?? 0,
           totalDoneSets: data.totalDoneSets ?? 0,
           sets: data.sets ?? [],
+          media: data.media ?? [],
         });
       });
       setWorkouts(items);
@@ -203,73 +208,106 @@ export default function HomePage() {
               const preview = grouped.slice(0, 3);
               const remaining = Math.max(grouped.length - 3, 0);
 
+              // choose first media as thumbnail (prefer image; fallback to video)
+              let mediaUrl: string | null = null;
+              if (w.media && w.media.length) {
+                const firstImage = w.media.find((u) => !isVideoUrl(u));
+                mediaUrl = firstImage || w.media[0];
+              }
+
               return (
                 <button
                   key={w.id}
                   onClick={() => navigate(`/workouts/${w.id}`)}
-                  className="w-full text-left rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-4 space-y-2 hover:border-yellow-400/40 hover:shadow-[0_0_0_1px_rgba(234,179,8,0.25)] transition"
+                  className="w-full text-left rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 hover:border-yellow-400/40 hover:shadow-[0_0_0_1px_rgba(234,179,8,0.25)] transition overflow-hidden"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-100">
-                        {w.title || "Workout"}
-                      </p>
-                      <p className="text-xs text-slate-400">{label}</p>
-                    </div>
-                    <div className="text-yellow-300 text-lg">⚡</div>
-                  </div>
-
-                  {w.description && (
-                    <p className="text-xs text-slate-300/90 mt-1">
-                      {w.description}
-                    </p>
-                  )}
-
-                  <div className="mt-2 grid grid-cols-3 gap-3 text-xs text-slate-200">
-                    <div>
-                      <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
-                        Time
-                      </p>
-                      <p>{formatDuration(w.durationSeconds)}</p>
-                    </div>
-                    <div>
-                      <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
-                        Volume
-                      </p>
-                      <p>{w.totalVolumeKg} kg</p>
-                    </div>
-                    <div>
-                      <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
-                        Sets
-                      </p>
-                      <p>{w.totalDoneSets}</p>
-                    </div>
-                  </div>
-
-                  {preview.length > 0 && (
-                    <div className="mt-3 space-y-1">
-                      {preview.map((ex) => (
-                        <div
-                          key={ex.name}
-                          className="flex items-center gap-3 text-xs"
-                        >
-                          <div className="h-8 w-8 rounded-full bg-slate-800 border border-yellow-400/20 flex items-center justify-center text-lg">
-                            🏋️
-                          </div>
-                          <p className="text-slate-200">
-                            <span className="font-semibold text-yellow-200">
-                              {ex.count} set{ex.count > 1 ? "s" : ""}
-                            </span>{" "}
-                            {ex.name}
-                          </p>
-                        </div>
-                      ))}
-                      {remaining > 0 && (
-                        <p className="text-[11px] text-yellow-300">
-                          See {remaining} more exercise
-                          {remaining > 1 ? "s" : ""} →
+                  {/* MAIN CONTENT FIRST */}
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-100">
+                          {w.title || "Workout"}
                         </p>
-                      )}
+                        <p className="text-xs text-slate-400">{label}</p>
+                      </div>
+                      <div className="text-yellow-300 text-lg">⚡</div>
+                    </div>
+
+                    {w.description && (
+                      <p className="text-xs text-slate-300/90 mt-1">
+                        {w.description}
+                      </p>
+                    )}
+
+                    <div className="mt-2 grid grid-cols-3 gap-3 text-xs text-slate-200">
+                      <div>
+                        <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
+                          Time
+                        </p>
+                        <p>{formatDuration(w.durationSeconds)}</p>
+                      </div>
+                      <div>
+                        <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
+                          Volume
+                        </p>
+                        <p>{w.totalVolumeKg} kg</p>
+                      </div>
+                      <div>
+                        <p className="uppercase tracking-wide text-[10px] text-yellow-200/70">
+                          Sets
+                        </p>
+                        <p>{w.totalDoneSets}</p>
+                      </div>
+                    </div>
+
+                    {preview.length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        {preview.map((ex) => (
+                          <div
+                            key={ex.name}
+                            className="flex items-center gap-3 text-xs"
+                          >
+                            <div className="h-8 w-8 rounded-full bg-slate-800 border border-yellow-400/20 flex items-center justify-center text-lg">
+                              🏋️
+                            </div>
+                            <p className="text-slate-200">
+                              <span className="font-semibold text-yellow-200">
+                                {ex.count} set{ex.count > 1 ? "s" : ""}
+                              </span>{" "}
+                              {ex.name}
+                            </p>
+                          </div>
+                        ))}
+                        {remaining > 0 && (
+                          <p className="text-[11px] text-yellow-300">
+                            See {remaining} more exercise
+                            {remaining > 1 ? "s" : ""} →
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* MEDIA UNDERNEATH — UNCROPPED (object-contain) */}
+                  {mediaUrl && (
+                    <div className="px-4 pb-4">
+                      <div className="rounded-xl border border-yellow-400/20 bg-black overflow-hidden flex items-center justify-center">
+                        {isVideoUrl(mediaUrl) ? (
+                          <video
+                            src={mediaUrl}
+                            controls
+                            playsInline
+                            className="w-full max-h-80 object-contain"
+                          />
+                        ) : (
+                          <img
+                            src={mediaUrl}
+                            alt="workout media"
+                            loading="lazy"
+                            className="w-full max-h-80 object-contain"
+                          />
+                        )}
+                      </div>
                     </div>
                   )}
                 </button>

@@ -1,4 +1,3 @@
-// src/pages/WorkoutDetailPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
@@ -6,9 +5,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 import type { WorkoutDoc, WorkoutSet } from "../types/workout";
-
-// Optional: add a background image to the header if you like
-// import OLYMPUS_BG_URL from "../assets/Olympus2.jpg";
 
 type FirestoreWorkout = {
   title: string;
@@ -20,6 +16,7 @@ type FirestoreWorkout = {
   finishedAt?: { toDate: () => Date };
   createdAt?: { toDate: () => Date };
   sets: WorkoutSet[];
+  media?: string[]; // 🔹 NEW: media URLs saved from SaveWorkoutPage
 };
 
 function formatDuration(sec: number) {
@@ -85,11 +82,17 @@ function groupSetsByExercise(sets: WorkoutSet[]) {
   return Array.from(map.values());
 }
 
+// crude detector for video URLs (checks extension before any ?query)
+const isVideoUrl = (url: string) => {
+  const clean = url.split("?")[0].toLowerCase();
+  return /\.(mp4|webm|mov|m4v|ogg)$/.test(clean);
+};
+
 export default function WorkoutDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [workout, setWorkout] = useState<WorkoutDoc | null>(null);
+  const [workout, setWorkout] = useState<WorkoutDoc & { media?: string[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -125,6 +128,7 @@ export default function WorkoutDetailPage() {
           totalVolumeKg: data.totalVolumeKg ?? 0,
           totalDoneSets: data.totalDoneSets ?? 0,
           sets: data.sets ?? [],
+          media: data.media ?? [], // 🔹 include media
         });
       } finally {
         setLoading(false);
@@ -180,16 +184,8 @@ export default function WorkoutDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
-      {/* Olympus header */}
-      <header
-        className="relative border-b border-slate-800"
-        // Uncomment to use a background image:
-        // style={{
-        //   backgroundImage: `linear-gradient(to bottom, rgba(2,6,23,0.70), rgba(2,6,23,0.9)), url(${OLYMPUS_BG_URL})`,
-        //   backgroundSize: "cover",
-        //   backgroundPosition: "center",
-        // }}
-      >
+      {/* Header */}
+      <header className="relative border-b border-slate-800">
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
             <button
@@ -222,6 +218,32 @@ export default function WorkoutDetailPage() {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* 🔹 Media gallery (images/videos) */}
+        {workout.media && workout.media.length > 0 && (
+          <section className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {workout.media.map((url, i) =>
+                isVideoUrl(url) ? (
+                  <video
+                    key={`vid-${i}`}
+                    src={url}
+                    controls
+                    playsInline
+                    className="w-full h-40 rounded-xl border border-yellow-400/20 bg-black object-cover"
+                  />
+                ) : (
+                  <img
+                    key={`img-${i}`}
+                    src={url}
+                    alt={`Workout media ${i + 1}`}
+                    className="w-full h-40 rounded-xl border border-yellow-400/20 object-cover"
+                  />
+                )
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Stats + Description */}
         <section className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-4 space-y-3">
           {workout.description && (
