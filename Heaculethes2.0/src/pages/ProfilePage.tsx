@@ -1,4 +1,3 @@
-// src/pages/ProfilePage.tsx
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import {
   collection,
@@ -7,8 +6,14 @@ import {
   orderBy,
   query,
   setDoc,
+  deleteDoc,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+  deleteObject,
+} from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 
 import { useAuth } from "../auth/AuthContext";
@@ -30,6 +35,7 @@ type FirestoreWorkout = {
   finishedAt?: { toDate: () => Date };
   createdAt?: { toDate: () => Date };
   sets: WorkoutSet[];
+  media?: string[]; // NEW: optional media URLs to clean up on delete
 };
 
 type ProfileData = {
@@ -47,13 +53,16 @@ function formatDuration(sec: number) {
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [workouts, setWorkouts] = useState<WorkoutDoc[] | null>(null);
+  const [workouts, setWorkouts] = useState<(WorkoutDoc & { media?: string[] })[] | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
   const [editName, setEditName] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Deleting state
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Load workouts
   useEffect(() => {
@@ -66,7 +75,7 @@ export default function ProfilePage() {
     const q = query(workoutsCol, orderBy("createdAt", "desc"));
 
     const unsub = onSnapshot(q, (snap) => {
-      const items: WorkoutDoc[] = [];
+      const items: (WorkoutDoc & { media?: string[] })[] = [];
       snap.forEach((docSnap) => {
         const data = docSnap.data() as unknown as FirestoreWorkout;
         const createdAt = data.createdAt?.toDate() ?? null;
@@ -84,6 +93,7 @@ export default function ProfilePage() {
           totalVolumeKg: data.totalVolumeKg ?? 0,
           totalDoneSets: data.totalDoneSets ?? 0,
           sets: data.sets ?? [],
+          media: data.media ?? [],
         });
       });
       setWorkouts(items);
@@ -210,6 +220,44 @@ export default function ProfilePage() {
     } finally {
       setUploadingAvatar(false);
       e.target.value = "";
+    }
+  };
+
+  // Delete workout (with optional media cleanup)
+  const handleDeleteWorkout = async (w: WorkoutDoc & { media?: string[] }) => {
+    if (!user) return;
+
+    const confirmed = window.confirm(
+      `Delete "${w.title || "Workout"}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setError(null);
+    setDeletingId(w.id);
+    try {
+      // Best-effort: delete media files referenced by URL (if any)
+      if (w.media && w.media.length) {
+        await Promise.allSettled(
+          w.media.map(async (url) => {
+            try {
+              const r = ref(storage, url); // accepts gs:// or https URL
+              await deleteObject(r);
+            } catch (err) {
+              // ignore individual failures (file might already be gone)
+              console.warn("Failed to delete media file:", err);
+            }
+          })
+        );
+      }
+
+      // Delete Firestore document (this drives UI via onSnapshot)
+      const workoutRef = doc(db, "users", user.uid, "workouts", w.id);
+      await deleteDoc(workoutRef);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete workout. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -346,7 +394,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Recent workouts preview */}
+        {/* Recent workouts preview (with delete) */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-yellow-200/90">
             Recent Workouts
@@ -364,13 +412,39 @@ export default function ProfilePage() {
               day: "numeric",
             });
 
+            const isDeleting = deletingId === w.id;
+
             return (
               <div
                 key={w.id}
-                className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-3 space-y-1 hover:border-yellow-400/35 transition"
+                className="rounded-2xl bg-slate-900/70 backdrop-blur border border-yellow-400/20 p-3 hover:border-yellow-400/35 transition"
               >
-                <p className="text-sm font-semibold text-slate-100">{w.title}</p>
-                <p className="text-[11px] text-slate-400">{label}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-100">
+                      {w.title}
+                    </p>
+                    <p className="text-[11px] text-slate-400">{label}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => navigate(`/workouts/${w.id}`)}
+                      className="text-[11px] px-2 py-1 rounded-md border border-yellow-400/30 text-yellow-200 hover:bg-yellow-500/10"
+                    >
+                      View
+                    </button>
+                    <button
+                      disabled={isDeleting}
+                      onClick={() => handleDeleteWorkout(w)}
+                      className="text-[11px] px-2 py-1 rounded-md border border-red-500/50 text-red-300 hover:bg-red-900/20 disabled:opacity-60"
+                      title="Delete workout"
+                    >
+                      {isDeleting ? "Deleting…" : "Delete"}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] text-slate-200">
                   <div>
                     <p className="uppercase tracking-wide text-[9px] text-yellow-200/70">
