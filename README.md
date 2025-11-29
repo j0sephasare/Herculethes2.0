@@ -42,13 +42,16 @@ The app is **mobile-first**, fully responsive, and deployable instantly via **Ve
 ```bash
 git clone https://github.com/yourusername/herculethes2.0.git
 cd herculethes2.0
+```  
 
-2️⃣ Install Dependencies
+### 2️⃣ Install Dependencies
+```bash
 npm install
-
+```
 3️⃣ Configure Environment Variables
 
 Create a .env file in the root directory:
+```bash
 VITE_FIREBASE_API_KEY=your_firebase_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
 VITE_FIREBASE_PROJECT_ID=your_project_id
@@ -56,63 +59,63 @@ VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_GOOGLE_MAPS_API_KEY=your_maps_api_key
+```
 🔐 Never commit your .env file to GitHub.
 
 4️⃣ Run the Application
+```bash
 npm run dev
-
-
+```
 Then visit 👉 http://localhost:5173
-
 
 5️⃣ Deploy on Vercel
 
-Push your code to GitHub
+1. Push your code to GitHub
 
-Import the repo to Vercel
+2. Import the repo to Vercel
 
-Add all .env variables under
+3. Add all .env variables under
 Project → Settings → Environment Variables
 
-Click Deploy 🚀
+4. Click Deploy 🚀
 
-🔥 Firebase Setup
+## 🔥 Firebase Setup
 
-Go to Firebase Console
+1. Go to Firebase Console
 
-Create Project → Add a Web App → copy config values
+2. reate Project → Add a Web App → copy config values
 
-Enable the following services:
+3. Enable the following services:
 
-🔐 Authentication → Email/Password
+.🔐 Authentication → Email/Password
 
-🗄️ Firestore Database → Start in Production Mode
+.🗄️ Firestore Database → Start in Production Mode
 
-🖼️ Storage → Enable
+.🖼️ Storage → Enable
 
-Update your .env with the Firebase config
+4.Update your .env with the Firebase config
 
-Optionally enable Hosting or Cloud Functions later
+5. Optionally enable Hosting or Cloud Functions later
 
-💪 Application Usage
+## 💪 Application Usage
 
 Once running, you can:
 
-🔑 Register / Login securely with Firebase Auth
+.🔑 Register / Login securely with Firebase Auth
 
-🏋️ Log workouts (exercises, sets, reps, weights)
+.🏋️ Log workouts (exercises, sets, reps, weights)
 
-📸 Upload media for each workout
+.📸 Upload media for each workout
 
-📊 View progress (volume, duration, sets)
+.📊 View progress (volume, duration, sets)
 
-🗺️ Explore local gyms using Google Maps
+.🗺️ Explore local gyms using Google Maps
 
-🍽️ Plan meals with AI-powered Spoonacular suggestions
+.🍽️ Plan meals with AI-powered Spoonacular suggestions
 
-🗂️ Manage workouts – view, delete, or (soon) reuse templates
+.🗂️ Manage workouts – view, delete, or (soon) reuse templates
 
-🧭 Project Architecture
+## 🧭 Project Architecture
 src/
  ┣ components/        → Reusable UI components (cards, charts, etc.)
  ┣ pages/             → Page-level components (Home, Profile, SaveWorkout…)
@@ -122,13 +125,13 @@ src/
  ┣ types/             → Shared TypeScript interfaces
  ┗ main.tsx           → Vite entry point
 
-🌍 APIs Used
+## 🌍 APIs Used
 Service	Purpose
 Firebase Auth & Firestore	Secure, scalable user + data management
 Firebase Storage	Workout media uploads
 Google Maps API	Map display, nearby gyms, route tracking
 Spoonacular API	Meal & nutrition data
-🏆 Acknowledgements
+## 🏆 Acknowledgements
 
 Firebase Team — Cloud platform & backend services
 
