@@ -1,34 +1,37 @@
-// Import the functions you need from the SDKs you need
+// src/firebase.ts
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Helper to read required Vite envs with a clear error if missing
+function req(name: string) {
+  const v = import.meta.env[name as keyof ImportMetaEnv] as string | undefined;
+  if (!v) throw new Error(`Missing required env: ${name}`);
+  return v;
+}
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDcb2166yrs6UOwvVexw7Zh6kMdRA5VVXw",
-  authDomain: "herculethes2-0.firebaseapp.com",
-  projectId: "herculethes2-0",
-  storageBucket: "herculethes2-0.firebasestorage.app",
-  messagingSenderId: "1012958658300",
-  appId: "1:1012958658300:web:9ae8b79be87f3d1c252179",
-  measurementId: "G-7KGWTGYYB2"
+  apiKey: req("VITE_FIREBASE_API_KEY"),
+  authDomain: req("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: req("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: req("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: req("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: req("VITE_FIREBASE_APP_ID"),
+  // Optional
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// guard analytics so it doesn't explode in non-browser environments
+// Guard analytics so it doesn't explode in non-browser envs
 let analytics: ReturnType<typeof getAnalytics> | undefined;
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && firebaseConfig.measurementId) {
   analytics = getAnalytics(app);
 }
 
-export { app, auth,db,storage,  analytics };
+export { app, auth, db, storage, analytics };
