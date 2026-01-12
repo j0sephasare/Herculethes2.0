@@ -204,7 +204,8 @@ export default function ProfilePage() {
     setError(null);
 
     try {
-      const avatarRef = ref(storage, `avatars/${user.uid}`);
+     const avatarRef = ref(storage, `avatars/${user.uid}/avatar_${Date.now()}_${file.name}`);
+
       await uploadBytes(avatarRef, file);
       const url = await getDownloadURL(avatarRef);
 
