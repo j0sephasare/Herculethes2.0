@@ -5,31 +5,31 @@
 ## 📸 Screenshots
 
 ###   Hall of Training (Home)
-![Home Screen](./screenshots/home.png)
+![Home Screen](./Screenshots/home.png)
 
 ###   Exercises
-![Exercises ](./screenshots/Exercise.png)
+![Exercises ](./Screenshots/Exercise.png)
 
 ###   Save Workout
-![Save Workout](./screenshots/SaveWorkout.png)
+![Save Workout](./Screenshots/SaveWorkout.png)
 
 ###   Profile & Stats
-![Profile](./screenshots/ProfilePage.png)
+![Profile](./Screenshots/ProfilePage.png)
 
 ###   Find Gyms
-![Gyms Map](./screenshots/LocalGyms.png)
+![Gyms Map](./Screenshots/LocalGyms.png)
 
 ###   Athlete Challenges
-![Challenges](./screenshots/Challenges.png)
+![Challenges](./Screenshots/Challenges.png)
 
 ###   Go For Run
-![GoForRun](./screenshots/GoForRun.png)
+![GoForRun](./Screenshots/GoForRun.png)
 
 ###   Macro Calculator
-![MacroCalculator](./screenshots/MacroCalculator.png)
+![MacroCalculator](./Screenshots/MacroCalculator.png)
 
 ###   MealPlanner
-![Mealplanner](./screenshots/MealPlanner.png)
+![Mealplanner](./Screenshots/MealPlanner.png)
 
 
 
