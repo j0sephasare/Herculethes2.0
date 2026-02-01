@@ -2,6 +2,14 @@
 ### The Ultimate Modern Fitness Tracker
 
 ---
+### Video Presentation 
+This video demonstrates:
+- Core workout tracking flow
+- Media uploads & Firebase integration
+- Progress dashboards & analytics
+- Google Maps gym finder
+[Watch the video on Google Drive]https://drive.google.com/file/d/1-Ew-U6ne4d1ucLM2AfPE6Nvf7NtH4OUu/view?usp=sharing
+
 ## 📸 Screenshots
 
 ###   Hall of Training (Home)
