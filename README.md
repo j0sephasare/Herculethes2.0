@@ -2,6 +2,36 @@
 ### The Ultimate Modern Fitness Tracker
 
 ---
+## 📸 Screenshots
+
+###   Hall of Training (Home)
+![Home Screen](./screenshots/home.png)
+
+###   Exercises
+![Exercises ](./screenshots/Exercise.png)
+
+###   Save Workout
+![Save Workout](./screenshots/SaveWorkout.png)
+
+###   Profile & Stats
+![Profile](./screenshots/ProfilePage.png)
+
+###   Find Gyms
+![Gyms Map](./screenshots/LocalGyms.png)
+
+###   Athlete Challenges
+![Challenges](./screenshots/Challenges.png)
+
+###   Go For Run
+![GoForRun](./screenshots/GoForRun.png)
+
+###   Macro Calculator
+![MacroCalculator](./screenshots/MacroCalculator.png)
+
+###   MealPlanner
+![Mealplanner](./screenshots/MealPlanner.png)
+
+
 
 ## 🧩 Description
 
